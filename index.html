@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CoPilot Trading - Analyse Temps Réel 500€</title>
+    <title>CoPilot Trading Pro - Analyse Seconde par Seconde eToro</title>
     <style>
         * {
             margin: 0;
@@ -29,81 +29,320 @@
         }
 
         .container {
-            max-width: 1600px;
+            max-width: 1800px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 15px;
         }
 
+        /* Header avec Timer Live */
         .main-header {
             background: white;
-            border-radius: 20px;
-            padding: 25px;
+            border-radius: 15px;
+            padding: 20px;
             margin-bottom: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
         .header-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
-        .header-title {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--dark);
-        }
-
-        .live-indicator {
+        .live-timer {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
+            background: #1f2937;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
         }
 
-        .live-dot {
-            width: 8px;
-            height: 8px;
-            background: var(--success);
+        .timer-seconds {
+            font-size: 24px;
+            font-weight: 700;
+            color: #10b981;
+            min-width: 100px;
+        }
+
+        .refresh-indicator {
+            width: 10px;
+            height: 10px;
+            background: #10b981;
             border-radius: 50%;
-            animation: pulse 2s infinite;
+            animation: pulse 1s infinite;
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
         }
 
-        .stats-grid {
+        /* Position Manager */
+        .position-manager {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .position-input {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
             margin-bottom: 20px;
         }
 
-        .stat-card {
-            background: #f8f9fa;
-            padding: 15px;
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-label {
+            font-size: 11px;
+            color: #78350f;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .input-field {
+            padding: 10px;
+            border: 2px solid #fbbf24;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            background: white;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #f59e0b;
+        }
+
+        /* Live Analysis Box */
+        .live-analysis {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .analysis-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .analysis-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .analysis-timestamp {
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: 600;
+        }
+
+        /* Real-time Prices Grid */
+        .prices-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .price-card {
+            background: #f9fafb;
+            padding: 12px;
             border-radius: 10px;
             text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .price-card.buy-signal {
+            border-color: var(--success);
+            background: #d1fae5;
+        }
+
+        .price-card.sell-signal {
+            border-color: var(--danger);
+            background: #fee2e2;
+        }
+
+        .price-symbol {
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--dark);
+        }
+
+        .price-value {
+            font-size: 18px;
+            font-weight: 700;
+            margin: 5px 0;
+        }
+
+        .price-change {
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .positive { color: var(--success); }
+        .negative { color: var(--danger); }
+
+        /* Action Cards */
+        .action-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 5px solid var(--primary);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .action-urgent {
+            border-left-color: var(--danger);
+            animation: urgentPulse 2s infinite;
+        }
+
+        @keyframes urgentPulse {
+            0%, 100% { box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+            50% { box-shadow: 0 3px 20px rgba(239, 68, 68, 0.3); }
+        }
+
+        .action-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .action-type {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .action-buy {
+            background: var(--success);
+            color: white;
+        }
+
+        .action-sell {
+            background: var(--danger);
+            color: white;
+        }
+
+        .action-hold {
+            background: var(--warning);
+            color: white;
+        }
+
+        /* P&L Calculator */
+        .pl-calculator {
+            background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .pl-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed #9ca3af;
+        }
+
+        .pl-row:last-child {
+            border-bottom: none;
+            padding-top: 12px;
+            margin-top: 8px;
+            border-top: 2px solid #6366f1;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        /* EToro Fees Display */
+        .etoro-fees {
+            background: #fee2e2;
+            border-radius: 10px;
+            padding: 12px;
+            margin: 10px 0;
+        }
+
+        .fee-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            padding: 5px 0;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        .btn-execute {
+            background: linear-gradient(135deg, var(--success), #059669);
+            color: white;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .btn-execute:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
 
         .stat-label {
-            font-size: 11px;
+            font-size: 10px;
             color: #6b7280;
             text-transform: uppercase;
             margin-bottom: 5px;
         }
 
         .stat-value {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 700;
             color: var(--dark);
         }
 
-        .positive { color: var(--success); }
-        .negative { color: var(--danger); }
-
+        /* Main Grid */
         .main-grid {
             display: grid;
             grid-template-columns: 2fr 1fr;
@@ -116,156 +355,38 @@
             }
         }
 
-        .card {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #e5e7eb;
-        }
-
-        .card-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--dark);
-        }
-
-        .crypto-item, .stock-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px;
-            background: #f9fafb;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .crypto-item:hover, .stock-item:hover {
-            background: #e5e7eb;
-            transform: translateX(5px);
-        }
-
-        .asset-info {
-            flex: 1;
-        }
-
-        .asset-symbol {
-            font-weight: 700;
-            font-size: 16px;
-            color: var(--dark);
-        }
-
-        .asset-name {
-            font-size: 12px;
-            color: #6b7280;
-        }
-
-        .asset-price {
-            text-align: right;
-        }
-
-        .price-value {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--dark);
-        }
-
-        .price-change {
-            font-size: 12px;
-            font-weight: 600;
-            margin-top: 3px;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 14px;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-success {
-            background: var(--success);
-            color: white;
-        }
-
-        .btn-danger {
-            background: var(--danger);
-            color: white;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-
-        .portfolio-item {
-            background: linear-gradient(135deg, #f3f4f6, #ffffff);
+        /* Alert System */
+        .alert {
+            padding: 12px 20px;
             border-radius: 10px;
-            padding: 15px;
             margin-bottom: 10px;
-        }
-
-        .portfolio-header {
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s;
         }
 
-        .analysis-box {
-            background: #fef3c7;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 15px;
+        @keyframes slideIn {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
 
-        .analysis-title {
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: var(--dark);
-        }
-
-        .signal-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .signal-buy {
+        .alert-success {
             background: #d1fae5;
-            color: var(--success);
+            border-left: 4px solid var(--success);
         }
 
-        .signal-sell {
+        .alert-danger {
             background: #fee2e2;
-            color: var(--danger);
+            border-left: 4px solid var(--danger);
         }
 
-        .signal-hold {
-            background: #e0e7ff;
-            color: var(--primary);
+        .alert-warning {
+            background: #fef3c7;
+            border-left: 4px solid var(--warning);
         }
 
+        /* Loading */
         .loading {
             display: inline-block;
             width: 20px;
@@ -280,185 +401,174 @@
             to { transform: rotate(360deg); }
         }
 
-        .alert {
-            padding: 12px 20px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .updating-flash {
+            animation: flash 0.5s;
         }
 
-        .alert-success {
-            background: #d1fae5;
-            color: var(--success);
-            border-left: 4px solid var(--success);
-        }
-
-        .alert-danger {
-            background: #fee2e2;
-            color: var(--danger);
-            border-left: 4px solid var(--danger);
-        }
-
-        .alert-warning {
-            background: #fef3c7;
-            color: var(--warning);
-            border-left: 4px solid var(--warning);
-        }
-
-        .action-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .search-box {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .search-input {
-            flex: 1;
-            padding: 10px;
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-
-        .search-input:focus {
-            outline: none;
-            border-color: var(--primary);
+        @keyframes flash {
+            0%, 100% { background: white; }
+            50% { background: #fef3c7; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
+        <!-- Header avec Timer Live -->
         <div class="main-header">
             <div class="header-top">
-                <h1 class="header-title">💎 CoPilot Trading - Analyse Live 500€</h1>
-                <div class="live-indicator">
-                    <div class="live-dot"></div>
-                    <span>Données en direct</span>
-                    <span id="currentTime" style="margin-left: 10px; font-weight: 600;">--:--:--</span>
+                <h1 style="font-size: 24px; font-weight: 700;">🚀 CoPilot Trading Pro - Analyse Temps Réel</h1>
+                <div class="live-timer">
+                    <div class="refresh-indicator"></div>
+                    <div>
+                        <div style="font-size: 11px; opacity: 0.8;">MISE À JOUR DANS</div>
+                        <div class="timer-seconds" id="refreshTimer">30s</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; opacity: 0.8;">HEURE EXACTE</div>
+                        <div style="font-size: 16px; font-weight: 600;" id="currentTime">--:--:--</div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Stats -->
+            <!-- Stats Rapides -->
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-label">Capital Initial</div>
-                    <div class="stat-value">€500.00</div>
+                    <div class="stat-value">€500</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Valeur Portfolio</div>
-                    <div class="stat-value" id="portfolioValue">€500.00</div>
+                    <div class="stat-label">Valeur Actuelle</div>
+                    <div class="stat-value" id="totalValue">€500.00</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">P&L Total</div>
+                    <div class="stat-value" id="totalPL">€0.00</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">P&L Jour</div>
                     <div class="stat-value" id="dailyPL">€0.00</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Cash Disponible</div>
+                    <div class="stat-label">Cash Dispo</div>
                     <div class="stat-value" id="availableCash">€500.00</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Frais eToro</div>
+                    <div class="stat-value" id="totalFees">€0.00</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">Positions</div>
                     <div class="stat-value" id="openPositions">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Performance</div>
+                    <div class="stat-label">Perf %</div>
                     <div class="stat-value" id="performance">0.00%</div>
                 </div>
             </div>
+        </div>
 
-            <!-- Search -->
-            <div class="search-box">
-                <input type="text" class="search-input" id="searchInput" placeholder="Rechercher crypto ou action (ex: BTC, ETH, AAPL)...">
-                <button class="btn btn-primary" onclick="searchAsset()">Rechercher</button>
-                <button class="btn btn-success" onclick="scanMarket()">Scanner le Marché</button>
+        <!-- Position Manager eToro -->
+        <div class="position-manager">
+            <h2 style="margin-bottom: 15px; font-size: 18px; font-weight: 700;">💼 Gestionnaire de Position eToro</h2>
+            <div class="position-input">
+                <div class="input-group">
+                    <label class="input-label">Crypto/Action</label>
+                    <input type="text" class="input-field" id="inputSymbol" placeholder="Ex: BTC, ETH, AAPL">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Prix d'Achat (€/$)</label>
+                    <input type="number" class="input-field" id="inputBuyPrice" placeholder="Ex: 45000" step="0.01">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Quantité</label>
+                    <input type="number" class="input-field" id="inputQuantity" placeholder="Ex: 0.01" step="0.0001">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Investissement (€)</label>
+                    <input type="number" class="input-field" id="inputInvestment" placeholder="Ex: 100" step="0.01">
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                <button class="btn btn-execute" onclick="addPosition()">➕ Ajouter Position</button>
+                <button class="btn" style="background: var(--primary); color: white;" onclick="analyzePosition()">🔍 Analyser Position</button>
+                <button class="btn" style="background: var(--danger); color: white;" onclick="clearPositions()">🗑️ Reset Portfolio</button>
             </div>
         </div>
 
-        <!-- Alerts -->
+        <!-- Alertes -->
         <div id="alertsContainer"></div>
 
         <!-- Main Grid -->
         <div class="main-grid">
-            <!-- Left Column -->
+            <!-- Colonne Gauche: Analyse Live -->
             <div>
-                <!-- Market Scanner -->
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title">🔥 Opportunités en Direct</h2>
-                        <span id="lastUpdate" style="font-size: 12px; color: #6b7280;">--:--</span>
+                <!-- Prix en Temps Réel -->
+                <div class="live-analysis">
+                    <div class="analysis-header">
+                        <h2 class="analysis-title">📊 Prix en Temps Réel (Mise à jour chaque seconde)</h2>
+                        <div class="analysis-timestamp" id="lastUpdate">--:--:--</div>
                     </div>
-                    
-                    <!-- Crypto Markets -->
-                    <div class="analysis-box">
-                        <div class="analysis-title">💰 Top Cryptos du Moment</div>
-                        <div id="cryptoList">
-                            <div style="text-align: center; padding: 20px;">
-                                <div class="loading"></div>
-                                <p style="margin-top: 10px; color: #6b7280;">Chargement des données...</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Stock Markets -->
-                    <div class="analysis-box" style="background: #dbeafe;">
-                        <div class="analysis-title">📈 Actions Populaires</div>
-                        <div id="stockList">
-                            <div style="text-align: center; padding: 20px;">
-                                <div class="loading"></div>
-                                <p style="margin-top: 10px; color: #6b7280;">Chargement des données...</p>
-                            </div>
-                        </div>
+                    <div class="prices-grid" id="livePrices">
+                        <!-- Prix générés dynamiquement -->
                     </div>
                 </div>
 
-                <!-- Analysis -->
-                <div class="card" style="margin-top: 20px;">
-                    <div class="card-header">
-                        <h2 class="card-title">🤖 Analyse IA</h2>
+                <!-- Actions Recommandées -->
+                <div class="live-analysis" style="margin-top: 20px;">
+                    <div class="analysis-header">
+                        <h2 class="analysis-title">🎯 Actions à Prendre MAINTENANT</h2>
                     </div>
-                    <div id="aiAnalysis" style="line-height: 1.8; color: #4b5563;">
+                    <div id="actionsContainer">
+                        <!-- Actions générées dynamiquement -->
+                    </div>
+                </div>
+
+                <!-- Analyse Détaillée -->
+                <div class="live-analysis" style="margin-top: 20px;">
+                    <div class="analysis-header">
+                        <h2 class="analysis-title">🤖 Analyse IA Détaillée</h2>
+                    </div>
+                    <div id="detailedAnalysis" style="line-height: 1.8; color: #4b5563;">
                         Analyse en cours...
                     </div>
                 </div>
             </div>
 
-            <!-- Right Column -->
+            <!-- Colonne Droite: Portfolio et Ordres -->
             <div>
-                <!-- Portfolio -->
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title">💼 Mon Portfolio</h2>
+                <!-- Mes Positions -->
+                <div class="live-analysis">
+                    <div class="analysis-header">
+                        <h2 class="analysis-title">💰 Mes Positions Actives</h2>
                     </div>
-                    <div id="portfolioContent">
+                    <div id="myPositions">
                         <p style="text-align: center; padding: 30px; color: #9ca3af;">
-                            Aucune position ouverte<br>
-                            <span style="font-size: 12px;">Utilisez le scanner pour trouver des opportunités</span>
+                            Aucune position active<br>
+                            <span style="font-size: 12px;">Ajoutez vos positions eToro ci-dessus</span>
                         </p>
-                    </div>
-                    <div class="action-grid">
-                        <button class="btn btn-success" onclick="autoInvest()">Auto-Invest</button>
-                        <button class="btn btn-primary" onclick="optimizePortfolio()">Optimiser</button>
-                        <button class="btn btn-danger" onclick="resetPortfolio()">Reset</button>
                     </div>
                 </div>
 
-                <!-- Recommendations -->
-                <div class="card" style="margin-top: 20px;">
-                    <div class="card-header">
-                        <h2 class="card-title">📌 Recommandations</h2>
+                <!-- Calculateur P&L avec Frais eToro -->
+                <div class="live-analysis" style="margin-top: 20px;">
+                    <div class="analysis-header">
+                        <h2 class="analysis-title">💸 Calculateur P&L (Frais eToro inclus)</h2>
                     </div>
-                    <div id="recommendations">
-                        <p style="color: #6b7280; font-size: 14px;">
-                            Analyse des meilleures opportunités...
+                    <div id="plCalculator">
+                        <p style="text-align: center; padding: 20px; color: #9ca3af;">
+                            Ajoutez une position pour voir le calcul
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Ordres Suggérés -->
+                <div class="live-analysis" style="margin-top: 20px;">
+                    <div class="analysis-header">
+                        <h2 class="analysis-title">📝 Ordres à Exécuter</h2>
+                    </div>
+                    <div id="suggestedOrders">
+                        <p style="text-align: center; padding: 20px; color: #9ca3af;">
+                            Analyse des opportunités...
                         </p>
                     </div>
                 </div>
@@ -470,1166 +580,557 @@
         // Configuration
         const CONFIG = {
             INITIAL_CAPITAL: 500,
-            MIN_POSITION: 50,
-            MAX_POSITIONS: 5,
-            BROKER_FEE: 1.00,
-            UPDATE_INTERVAL: 30000 // 30 seconds
+            UPDATE_INTERVAL: 1000, // Mise à jour chaque seconde
+            REFRESH_INTERVAL: 30000, // Refresh complet toutes les 30 secondes
+            ETORO_FEES: {
+                crypto: {
+                    spread: 0.0075, // 0.75% spread moyen crypto
+                    overnight: 0.00003, // Frais overnight crypto
+                    weekend: 0.00006 // Frais weekend crypto
+                },
+                stocks: {
+                    spread: 0.0009, // 0.09% spread actions
+                    overnight: 0, // Pas de frais overnight sur actions
+                    conversion: 0.005 // 0.5% conversion devise
+                },
+                withdrawal: 5 // 5$ frais de retrait
+            }
         };
 
-        // Portfolio State avec Historique et Analyse
-        let portfolio = {
-            cash: 500,
-            positions: [],
-            transactions: [],
-            totalValue: 500,
-            history: [], // Historique des prix sur plusieurs jours
-            predictions: [], // Prédictions basées sur l'historique
-            performance: {} // Performance par actif
+        // État Global
+        let state = {
+            positions: JSON.parse(localStorage.getItem('positions')) || [],
+            marketData: {},
+            lastPrices: {},
+            refreshCountdown: 30,
+            secondsElapsed: 0,
+            alerts: [],
+            predictions: {}
         };
 
-        // Market Data Cache avec Historique
-        let marketData = {
-            crypto: [],
-            stocks: [],
-            lastUpdate: null,
-            dailyHistory: JSON.parse(localStorage.getItem('marketHistory')) || {},
-            suggestions: JSON.parse(localStorage.getItem('dailySuggestions')) || []
-        };
+        // Cache des prix
+        let priceCache = new Map();
+        let lastFetch = 0;
 
-        // Système d'Analyse Prédictive
-        const aiAnalysis = {
-            // Analyser les performances de la veille
-            analyzeYesterdayPerformance: function() {
-                const yesterday = new Date();
-                yesterday.setDate(yesterday.getDate() - 1);
-                const yesterdayKey = yesterday.toISOString().split('T')[0];
-                
-                const history = marketData.dailyHistory[yesterdayKey];
-                if (!history) return null;
-                
-                const performance = [];
-                for (let asset of history) {
-                    const today = marketData.crypto.find(c => c.symbol === asset.symbol) || 
-                                 marketData.stocks.find(s => s.symbol === asset.symbol);
-                    
-                    if (today) {
-                        const change = ((today.price - asset.price) / asset.price) * 100;
-                        performance.push({
-                            symbol: asset.symbol,
-                            yesterdayPrice: asset.price,
-                            todayPrice: today.price,
-                            performance: change,
-                            signal: asset.signal,
-                            wasCorrect: (asset.signal === 'BUY' && change > 0) || 
-                                       (asset.signal === 'SELL' && change < 0)
-                        });
-                    }
+        // Récupérer les prix en temps réel
+        async function fetchRealTimePrices() {
+            try {
+                // Limite à 1 appel par seconde
+                const now = Date.now();
+                if (now - lastFetch < 1000) {
+                    return state.marketData;
                 }
-                
-                return performance;
-            },
-            
-            // Calculer le taux de réussite des prédictions
-            calculateSuccessRate: function() {
-                const history = JSON.parse(localStorage.getItem('predictionHistory')) || [];
-                if (history.length === 0) return { rate: 0, total: 0 };
-                
-                const correct = history.filter(h => h.wasCorrect).length;
-                return {
-                    rate: (correct / history.length) * 100,
-                    total: history.length,
-                    correct: correct
+                lastFetch = now;
+
+                // Crypto prices from CoinGecko
+                const cryptoResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,binancecoin,ripple,cardano,solana,polkadot,dogecoin,shiba-inu,polygon&vs_currencies=eur&include_24hr_change=true&include_24hr_vol=true');
+                const cryptoData = await cryptoResponse.json();
+
+                // Convertir en format utilisable
+                const formattedData = {
+                    BTC: { price: cryptoData.bitcoin?.eur || 0, change: cryptoData.bitcoin?.eur_24h_change || 0 },
+                    ETH: { price: cryptoData.ethereum?.eur || 0, change: cryptoData.ethereum?.eur_24h_change || 0 },
+                    BNB: { price: cryptoData.binancecoin?.eur || 0, change: cryptoData.binancecoin?.eur_24h_change || 0 },
+                    XRP: { price: cryptoData.ripple?.eur || 0, change: cryptoData.ripple?.eur_24h_change || 0 },
+                    ADA: { price: cryptoData.cardano?.eur || 0, change: cryptoData.cardano?.eur_24h_change || 0 },
+                    SOL: { price: cryptoData.solana?.eur || 0, change: cryptoData.solana?.eur_24h_change || 0 },
+                    DOT: { price: cryptoData.polkadot?.eur || 0, change: cryptoData.polkadot?.eur_24h_change || 0 },
+                    DOGE: { price: cryptoData.dogecoin?.eur || 0, change: cryptoData.dogecoin?.eur_24h_change || 0 },
+                    SHIB: { price: cryptoData['shiba-inu']?.eur || 0, change: cryptoData['shiba-inu']?.eur_24h_change || 0 },
+                    MATIC: { price: cryptoData.polygon?.eur || 0, change: cryptoData.polygon?.eur_24h_change || 0 }
                 };
-            },
+
+                state.marketData = formattedData;
+                return formattedData;
+            } catch (error) {
+                console.error('Erreur fetch prices:', error);
+                return state.marketData;
+            }
+        }
+
+        // Analyser une position
+        function analyzePositionData(position, currentPrice) {
+            const quantity = parseFloat(position.quantity);
+            const buyPrice = parseFloat(position.buyPrice);
+            const investment = parseFloat(position.investment);
             
-            // Générer des prédictions basées sur les patterns
-            generatePredictions: function() {
-                const predictions = [];
-                const allAssets = [...marketData.crypto, ...marketData.stocks];
+            // Calcul du P&L brut
+            const currentValue = quantity * currentPrice;
+            const grossPL = currentValue - investment;
+            const grossPLPercent = (grossPL / investment) * 100;
+            
+            // Calcul des frais eToro
+            const isStock = !['BTC', 'ETH', 'BNB', 'XRP', 'ADA', 'SOL', 'DOT', 'DOGE', 'SHIB', 'MATIC'].includes(position.symbol);
+            const fees = isStock ? CONFIG.ETORO_FEES.stocks : CONFIG.ETORO_FEES.crypto;
+            
+            // Frais d'entrée (spread)
+            const entryFee = investment * fees.spread;
+            
+            // Frais de sortie (spread)
+            const exitFee = currentValue * fees.spread;
+            
+            // Frais overnight (si position > 1 jour)
+            const daysHeld = Math.floor((Date.now() - (position.timestamp || Date.now())) / (1000 * 60 * 60 * 24));
+            const overnightFee = isStock ? 0 : (investment * fees.overnight * daysHeld);
+            
+            // Total des frais
+            const totalFees = entryFee + exitFee + overnightFee;
+            
+            // P&L net
+            const netPL = grossPL - totalFees;
+            const netPLPercent = (netPL / investment) * 100;
+            
+            // Recommandation
+            let recommendation = 'HOLD';
+            let confidence = 50;
+            let reasoning = [];
+            
+            // Analyse technique simple
+            const priceChange = ((currentPrice - buyPrice) / buyPrice) * 100;
+            
+            if (priceChange > 15) {
+                recommendation = 'SELL';
+                confidence = 85;
+                reasoning.push('Profit de +15% atteint, prendre les bénéfices');
+            } else if (priceChange > 10) {
+                recommendation = 'PARTIAL_SELL';
+                confidence = 75;
+                reasoning.push('Profit de +10%, vendre 50% pour sécuriser');
+            } else if (priceChange < -10) {
+                recommendation = 'SELL';
+                confidence = 80;
+                reasoning.push('Perte de -10%, couper les pertes (stop loss)');
+            } else if (priceChange > 5 && state.marketData[position.symbol]?.change < -2) {
+                recommendation = 'SELL';
+                confidence = 70;
+                reasoning.push('Profit de +5% avec momentum négatif, sécuriser');
+            } else if (priceChange < -5 && state.marketData[position.symbol]?.change > 3) {
+                recommendation = 'BUY_MORE';
+                confidence = 65;
+                reasoning.push('En perte mais momentum positif, moyenner à la baisse');
+            }
+            
+            return {
+                currentPrice,
+                currentValue,
+                grossPL,
+                grossPLPercent,
+                entryFee,
+                exitFee,
+                overnightFee,
+                totalFees,
+                netPL,
+                netPLPercent,
+                recommendation,
+                confidence,
+                reasoning,
+                priceChange
+            };
+        }
+
+        // Ajouter une position
+        function addPosition() {
+            const symbol = document.getElementById('inputSymbol').value.toUpperCase();
+            const buyPrice = parseFloat(document.getElementById('inputBuyPrice').value);
+            const quantity = parseFloat(document.getElementById('inputQuantity').value);
+            const investment = parseFloat(document.getElementById('inputInvestment').value);
+            
+            if (!symbol || !buyPrice || (!quantity && !investment)) {
+                showAlert('danger', 'Erreur', 'Remplissez au moins Symbol, Prix et (Quantité ou Investissement)');
+                return;
+            }
+            
+            // Calculer la quantité si non fournie
+            const finalQuantity = quantity || (investment / buyPrice);
+            const finalInvestment = investment || (quantity * buyPrice);
+            
+            const position = {
+                id: Date.now(),
+                symbol,
+                buyPrice,
+                quantity: finalQuantity,
+                investment: finalInvestment,
+                timestamp: Date.now()
+            };
+            
+            state.positions.push(position);
+            localStorage.setItem('positions', JSON.stringify(state.positions));
+            
+            // Clear inputs
+            document.getElementById('inputSymbol').value = '';
+            document.getElementById('inputBuyPrice').value = '';
+            document.getElementById('inputQuantity').value = '';
+            document.getElementById('inputInvestment').value = '';
+            
+            showAlert('success', 'Position ajoutée', `${symbol} @ €${buyPrice}`);
+            updatePositions();
+            analyzeAllPositions();
+        }
+
+        // Analyser toutes les positions
+        async function analyzeAllPositions() {
+            const prices = await fetchRealTimePrices();
+            const actions = [];
+            
+            for (let position of state.positions) {
+                const currentPrice = prices[position.symbol]?.price || position.buyPrice;
+                const analysis = analyzePositionData(position, currentPrice);
                 
-                for (let asset of allAssets) {
-                    const history = this.getAssetHistory(asset.symbol);
-                    const prediction = this.predictNextMove(asset, history);
-                    
-                    predictions.push({
-                        symbol: asset.symbol,
-                        currentPrice: asset.price,
-                        prediction: prediction.direction,
-                        confidence: prediction.confidence,
-                        targetPrice: prediction.targetPrice,
-                        stopLoss: prediction.stopLoss,
-                        reasoning: prediction.reasoning,
-                        timestamp: new Date().toISOString()
+                if (analysis.recommendation !== 'HOLD') {
+                    actions.push({
+                        position,
+                        analysis,
+                        priority: analysis.confidence
                     });
                 }
-                
-                // Trier par confiance
-                predictions.sort((a, b) => b.confidence - a.confidence);
-                portfolio.predictions = predictions;
-                
-                return predictions;
-            },
+            }
             
-            // Obtenir l'historique d'un actif
-            getAssetHistory: function(symbol) {
-                const history = [];
-                const days = Object.keys(marketData.dailyHistory).sort();
-                
-                for (let day of days.slice(-7)) { // 7 derniers jours
-                    const dayData = marketData.dailyHistory[day];
-                    const asset = dayData?.find(a => a.symbol === symbol);
-                    if (asset) {
-                        history.push({
-                            date: day,
-                            price: asset.price,
-                            change: asset.change || asset.change24h || 0,
-                            volume: asset.volume
-                        });
-                    }
-                }
-                
-                return history;
-            },
+            // Trier par priorité
+            actions.sort((a, b) => b.priority - a.priority);
             
-            // Prédire le prochain mouvement
-            predictNextMove: function(asset, history) {
-                let confidence = 50;
-                let direction = 'HOLD';
-                let reasoning = [];
+            // Afficher les actions
+            displayActions(actions);
+            
+            // Analyser les opportunités d'achat
+            analyzeOpportunities(prices);
+        }
+
+        // Analyser les opportunités
+        function analyzeOpportunities(prices) {
+            const opportunities = [];
+            const availableCash = 500 - state.positions.reduce((sum, p) => sum + p.investment, 0);
+            
+            for (let [symbol, data] of Object.entries(prices)) {
+                // Skip si on a déjà une position
+                if (state.positions.find(p => p.symbol === symbol)) continue;
                 
-                // Analyse de tendance (Moving Average)
-                if (history.length >= 3) {
-                    const ma3 = history.slice(-3).reduce((sum, h) => sum + h.price, 0) / 3;
-                    const ma7 = history.length >= 7 ? 
-                                history.reduce((sum, h) => sum + h.price, 0) / history.length : ma3;
-                    
-                    if (asset.price > ma3 && ma3 > ma7) {
-                        direction = 'BUY';
-                        confidence += 20;
-                        reasoning.push('Tendance haussière confirmée (MA3 > MA7)');
-                    } else if (asset.price < ma3 && ma3 < ma7) {
-                        direction = 'SELL';
-                        confidence += 20;
-                        reasoning.push('Tendance baissière confirmée (MA3 < MA7)');
-                    }
-                }
+                let score = 50;
+                let reasons = [];
                 
                 // Analyse du momentum
-                const change = asset.change24h || asset.change || 0;
-                if (Math.abs(change) > 5) {
-                    if (change > 5 && direction !== 'SELL') {
-                        confidence += 15;
-                        reasoning.push(`Fort momentum positif (+${change.toFixed(2)}%)`);
-                    } else if (change < -5 && direction !== 'BUY') {
-                        confidence += 15;
-                        reasoning.push(`Survente potentielle (${change.toFixed(2)}%)`);
-                        direction = 'BUY'; // Contre-tendance
+                if (data.change > 5) {
+                    score += 20;
+                    reasons.push(`Momentum fort +${data.change.toFixed(2)}%`);
+                } else if (data.change < -5) {
+                    score += 15;
+                    reasons.push(`Survente potentielle ${data.change.toFixed(2)}%`);
+                }
+                
+                // Analyse par rapport à l'historique
+                const lastPrice = state.lastPrices[symbol];
+                if (lastPrice) {
+                    const shortTermChange = ((data.price - lastPrice) / lastPrice) * 100;
+                    if (shortTermChange > 0.5) {
+                        score += 10;
+                        reasons.push('Tendance court terme positive');
                     }
                 }
                 
-                // Analyse du volume (si disponible)
-                if (history.length >= 2) {
-                    const avgVolume = history.reduce((sum, h) => sum + (h.volume || 0), 0) / history.length;
-                    if (asset.volume > avgVolume * 1.5) {
-                        confidence += 10;
-                        reasoning.push('Volume élevé détecté');
-                    }
+                if (score > 65) {
+                    opportunities.push({
+                        symbol,
+                        price: data.price,
+                        change: data.change,
+                        score,
+                        reasons,
+                        allocation: Math.min(availableCash * 0.3, 100) // Max 30% ou 100€
+                    });
                 }
-                
-                // Support et Résistance
-                if (history.length >= 5) {
-                    const prices = history.map(h => h.price);
-                    const maxPrice = Math.max(...prices);
-                    const minPrice = Math.min(...prices);
-                    
-                    if (asset.price <= minPrice * 1.02) {
-                        direction = 'BUY';
-                        confidence += 15;
-                        reasoning.push('Proche du support');
-                    } else if (asset.price >= maxPrice * 0.98) {
-                        if (change > 0) {
-                            reasoning.push('Breakout potentiel');
-                            confidence += 10;
-                        } else {
-                            direction = 'SELL';
-                            confidence += 10;
-                            reasoning.push('Résistance testée');
-                        }
-                    }
-                }
-                
-                // Calcul du target et stop loss
-                const volatility = this.calculateVolatility(history);
-                const targetMultiplier = direction === 'BUY' ? 1 + (volatility * 2) : 1 - (volatility * 2);
-                const stopMultiplier = direction === 'BUY' ? 1 - volatility : 1 + volatility;
-                
-                return {
-                    direction: direction,
-                    confidence: Math.min(95, confidence),
-                    targetPrice: asset.price * targetMultiplier,
-                    stopLoss: asset.price * stopMultiplier,
-                    reasoning: reasoning,
-                    volatility: volatility
-                };
-            },
-            
-            // Calculer la volatilité
-            calculateVolatility: function(history) {
-                if (history.length < 2) return 0.02; // 2% par défaut
-                
-                const changes = [];
-                for (let i = 1; i < history.length; i++) {
-                    const change = (history[i].price - history[i-1].price) / history[i-1].price;
-                    changes.push(Math.abs(change));
-                }
-                
-                return changes.reduce((sum, c) => sum + c, 0) / changes.length;
-            },
-            
-            // Sauvegarder l'historique du jour
-            saveDailyData: function() {
-                const today = new Date().toISOString().split('T')[0];
-                const allAssets = [...marketData.crypto, ...marketData.stocks];
-                
-                marketData.dailyHistory[today] = allAssets.map(asset => ({
-                    symbol: asset.symbol,
-                    name: asset.name,
-                    price: asset.price,
-                    change: asset.change24h || asset.change,
-                    volume: asset.volume,
-                    signal: getSignal(asset.change24h || asset.change, asset.price),
-                    timestamp: new Date().toISOString()
-                }));
-                
-                // Garder seulement 30 jours d'historique
-                const days = Object.keys(marketData.dailyHistory).sort();
-                if (days.length > 30) {
-                    delete marketData.dailyHistory[days[0]];
-                }
-                
-                localStorage.setItem('marketHistory', JSON.stringify(marketData.dailyHistory));
-            },
-            
-            // Générer les ordres optimaux
-            generateOptimalOrders: function() {
-                const orders = [];
-                const predictions = this.generatePredictions();
-                const availableCash = portfolio.cash;
-                
-                // Filtrer les meilleures opportunités
-                const topBuys = predictions
-                    .filter(p => p.prediction === 'BUY' && p.confidence > 70)
-                    .slice(0, 5);
-                
-                // Calculer l'allocation optimale (Kelly Criterion simplifié)
-                const totalConfidence = topBuys.reduce((sum, p) => sum + p.confidence, 0);
-                
-                for (let pred of topBuys) {
-                    const allocation = (availableCash * (pred.confidence / totalConfidence)) * 0.5; // 50% du Kelly pour sécurité
-                    
-                    if (allocation >= CONFIG.MIN_POSITION) {
-                        orders.push({
-                            symbol: pred.symbol,
-                            type: 'BUY',
-                            price: pred.currentPrice,
-                            quantity: Math.floor(allocation / pred.currentPrice),
-                            allocation: allocation,
-                            confidence: pred.confidence,
-                            targetPrice: pred.targetPrice,
-                            stopLoss: pred.stopLoss,
-                            reasoning: pred.reasoning
-                        });
-                    }
-                }
-                
-                return orders;
             }
-        };
-
-        // Fetch Crypto Data (Using CoinGecko public API - no key needed)
-        async function fetchCryptoData() {
-            try {
-                const response = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=eur&order=market_cap_desc&per_page=10&page=1&sparkline=false&price_change_percentage=24h');
-                const data = await response.json();
-                
-                marketData.crypto = data.map(coin => ({
-                    symbol: coin.symbol.toUpperCase(),
-                    name: coin.name,
-                    price: coin.current_price,
-                    change24h: coin.price_change_percentage_24h,
-                    marketCap: coin.market_cap,
-                    volume: coin.total_volume,
-                    image: coin.image
-                }));
-                
-                displayCryptoData();
-                return data;
-            } catch (error) {
-                console.error('Erreur crypto:', error);
-                showAlert('danger', 'Erreur', 'Impossible de charger les données crypto');
-                return [];
-            }
+            
+            // Afficher les opportunités
+            displayOpportunities(opportunities);
+            
+            // Sauvegarder les prix pour comparaison
+            state.lastPrices = {...prices};
         }
 
-        // Display Crypto Data
-        function displayCryptoData() {
-            const container = document.getElementById('cryptoList');
+        // Afficher les prix en temps réel
+        function displayLivePrices(prices) {
+            const container = document.getElementById('livePrices');
             
-            if (marketData.crypto.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #9ca3af;">Aucune donnée disponible</p>';
+            const html = Object.entries(prices).map(([symbol, data]) => {
+                const position = state.positions.find(p => p.symbol === symbol);
+                const signal = position ? 'position' : data.change > 3 ? 'buy-signal' : data.change < -3 ? 'sell-signal' : '';
+                
+                return `
+                    <div class="price-card ${signal} updating-flash">
+                        <div class="price-symbol">${symbol}</div>
+                        <div class="price-value">€${data.price.toFixed(data.price > 100 ? 2 : 4)}</div>
+                        <div class="price-change ${data.change >= 0 ? 'positive' : 'negative'}">
+                            ${data.change >= 0 ? '+' : ''}${data.change.toFixed(2)}%
+                        </div>
+                        ${position ? '<div style="font-size: 10px; color: #6366f1; margin-top: 5px;">📍 Position active</div>' : ''}
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = html;
+        }
+
+        // Afficher les actions
+        function displayActions(actions) {
+            const container = document.getElementById('actionsContainer');
+            
+            if (actions.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 20px; color: #9ca3af;">Aucune action urgente. Continuez à HOLD.</p>';
                 return;
             }
-
-            container.innerHTML = marketData.crypto.slice(0, 5).map(crypto => {
-                const signal = getSignal(crypto.change24h, crypto.price);
+            
+            const html = actions.map(action => {
+                const urgent = action.analysis.recommendation === 'SELL' && action.analysis.priceChange < -8;
+                
                 return `
-                    <div class="crypto-item" onclick="analyzeAsset('${crypto.symbol}', ${crypto.price}, 'crypto')">
-                        <div class="asset-info">
-                            <div class="asset-symbol">${crypto.symbol}</div>
-                            <div class="asset-name">${crypto.name}</div>
-                        </div>
-                        <div class="asset-price">
-                            <div class="price-value">€${crypto.price.toFixed(2)}</div>
-                            <div class="price-change ${crypto.change24h >= 0 ? 'positive' : 'negative'}">
-                                ${crypto.change24h >= 0 ? '+' : ''}${crypto.change24h.toFixed(2)}%
+                    <div class="action-card ${urgent ? 'action-urgent' : ''}">
+                        <div class="action-header">
+                            <div>
+                                <strong style="font-size: 16px;">${action.position.symbol}</strong>
+                                <span style="margin-left: 10px; color: #6b7280;">
+                                    Acheté à €${action.position.buyPrice} → Actuel €${action.analysis.currentPrice.toFixed(2)}
+                                </span>
+                            </div>
+                            <div class="action-type action-${action.analysis.recommendation === 'SELL' ? 'sell' : action.analysis.recommendation === 'BUY_MORE' ? 'buy' : 'hold'}">
+                                ${action.analysis.recommendation}
                             </div>
                         </div>
-                        <div style="margin-left: 15px;">
-                            <span class="signal-badge signal-${signal.toLowerCase()}">${signal}</span>
+                        
+                        <div class="pl-calculator">
+                            <div class="pl-row">
+                                <span>Valeur actuelle:</span>
+                                <span>€${action.analysis.currentValue.toFixed(2)}</span>
+                            </div>
+                            <div class="pl-row">
+                                <span>P&L Brut:</span>
+                                <span class="${action.analysis.grossPL >= 0 ? 'positive' : 'negative'}">
+                                    ${action.analysis.grossPL >= 0 ? '+' : ''}€${action.analysis.grossPL.toFixed(2)} 
+                                    (${action.analysis.grossPLPercent.toFixed(2)}%)
+                                </span>
+                            </div>
+                            <div class="pl-row">
+                                <span>Frais eToro Total:</span>
+                                <span style="color: var(--danger);">-€${action.analysis.totalFees.toFixed(2)}</span>
+                            </div>
+                            <div class="pl-row">
+                                <span><strong>P&L Net:</strong></span>
+                                <span class="${action.analysis.netPL >= 0 ? 'positive' : 'negative'}">
+                                    <strong>
+                                        ${action.analysis.netPL >= 0 ? '+' : ''}€${action.analysis.netPL.toFixed(2)}
+                                        (${action.analysis.netPLPercent.toFixed(2)}%)
+                                    </strong>
+                                </span>
+                            </div>
                         </div>
+                        
+                        <div style="margin-top: 15px; padding: 10px; background: #f9fafb; border-radius: 8px;">
+                            <strong>Analyse (Confiance: ${action.analysis.confidence}%)</strong><br>
+                            ${action.analysis.reasoning.map(r => `• ${r}`).join('<br>')}
+                        </div>
+                        
+                        ${action.analysis.recommendation === 'SELL' ? `
+                            <button class="btn btn-execute" style="background: var(--danger);" 
+                                onclick="executeAction('SELL', '${action.position.symbol}', ${action.analysis.currentPrice})">
+                                🔴 VENDRE MAINTENANT (Net: €${action.analysis.netPL.toFixed(2)})
+                            </button>
+                        ` : action.analysis.recommendation === 'BUY_MORE' ? `
+                            <button class="btn btn-execute" 
+                                onclick="executeAction('BUY', '${action.position.symbol}', ${action.analysis.currentPrice})">
+                                🟢 ACHETER PLUS (Moyenner)
+                            </button>
+                        ` : ''}
                     </div>
                 `;
             }).join('');
-        }
-
-        // Fetch Stock Data - Using multiple free APIs
-        async function fetchStockData() {
-            try {
-                // Method 1: Try Yahoo Finance via AllOrigins proxy (no API key needed)
-                const symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA'];
-                const stockPromises = symbols.map(async (symbol) => {
-                    try {
-                        // Using a CORS proxy to access Yahoo Finance
-                        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`;
-                        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-                        
-                        const response = await fetch(proxyUrl);
-                        const data = await response.json();
-                        
-                        if (data.chart && data.chart.result && data.chart.result[0]) {
-                            const quote = data.chart.result[0];
-                            const price = quote.meta.regularMarketPrice;
-                            const previousClose = quote.meta.previousClose;
-                            const change = ((price - previousClose) / previousClose * 100);
-                            
-                            return {
-                                symbol: symbol,
-                                name: quote.meta.longName || symbol,
-                                price: price,
-                                change: change,
-                                volume: quote.meta.regularMarketVolume
-                            };
-                        }
-                    } catch (err) {
-                        console.log(`Erreur pour ${symbol}, essai méthode alternative`);
-                        return null;
-                    }
-                });
-
-                let results = await Promise.all(stockPromises);
-                results = results.filter(r => r !== null);
-
-                // Si Yahoo Finance ne marche pas, essayer une API alternative
-                if (results.length === 0) {
-                    // Utiliser Twelve Data API (gratuit, pas de clé requise pour les données de base)
-                    const response = await fetch('https://api.twelvedata.com/stocks?exchange=NASDAQ&format=JSON');
-                    const data = await response.json();
-                    
-                    if (data.data) {
-                        results = data.data.slice(0, 10).map(stock => ({
-                            symbol: stock.symbol,
-                            name: stock.name,
-                            price: Math.random() * 500 + 50, // Prix simulé car l'API gratuite ne donne pas les prix en temps réel
-                            change: (Math.random() - 0.5) * 10,
-                            volume: Math.floor(Math.random() * 10000000)
-                        }));
-                    }
-                }
-
-                marketData.stocks = results.length > 0 ? results : getFallbackStocks();
-                displayStockData();
-            } catch (error) {
-                console.error('Erreur stocks:', error);
-                // Fallback avec des données de secours
-                marketData.stocks = getFallbackStocks();
-                displayStockData();
-            }
-        }
-
-        // Fallback stocks data si les APIs ne fonctionnent pas
-        function getFallbackStocks() {
-            return [
-                { symbol: 'AAPL', name: 'Apple Inc.', price: 182.50, change: 1.2 },
-                { symbol: 'MSFT', name: 'Microsoft', price: 425.30, change: -0.5 },
-                { symbol: 'GOOGL', name: 'Alphabet', price: 142.80, change: 2.1 },
-                { symbol: 'AMZN', name: 'Amazon', price: 178.90, change: -1.3 },
-                { symbol: 'TSLA', name: 'Tesla', price: 245.60, change: 3.5 }
-            ];
-        }
-
-        // Display Stock Data
-        function displayStockData() {
-            const container = document.getElementById('stockList');
             
-            container.innerHTML = marketData.stocks.map(stock => {
-                const signal = getSignal(stock.change, stock.price);
-                return `
-                    <div class="stock-item" onclick="analyzeAsset('${stock.symbol}', ${stock.price}, 'stock')">
-                        <div class="asset-info">
-                            <div class="asset-symbol">${stock.symbol}</div>
-                            <div class="asset-name">${stock.name}</div>
+            container.innerHTML = html;
+        }
+
+        // Afficher les opportunités
+        function displayOpportunities(opportunities) {
+            const container = document.getElementById('suggestedOrders');
+            
+            if (opportunities.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 20px; color: #9ca3af;">Aucune opportunité forte détectée</p>';
+                return;
+            }
+            
+            const html = opportunities.slice(0, 3).map(opp => `
+                <div class="action-card">
+                    <div class="action-header">
+                        <div>
+                            <strong>${opp.symbol}</strong>
+                            <span style="margin-left: 10px; color: #6b7280;">€${opp.price.toFixed(2)}</span>
                         </div>
-                        <div class="asset-price">
-                            <div class="price-value">$${stock.price.toFixed(2)}</div>
-                            <div class="price-change ${stock.change >= 0 ? 'positive' : 'negative'}">
-                                ${stock.change >= 0 ? '+' : ''}${stock.change.toFixed(2)}%
-                            </div>
+                        <div class="action-type action-buy">ACHETER</div>
+                    </div>
+                    <div style="margin: 15px 0;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>Score d'opportunité:</span>
+                            <span style="font-weight: 600;">${opp.score}/100</span>
                         </div>
-                        <div style="margin-left: 15px;">
-                            <span class="signal-badge signal-${signal.toLowerCase()}">${signal}</span>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>Changement 24h:</span>
+                            <span class="${opp.change >= 0 ? 'positive' : 'negative'}">
+                                ${opp.change >= 0 ? '+' : ''}${opp.change.toFixed(2)}%
+                            </span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Allocation suggérée:</span>
+                            <span style="font-weight: 600;">€${opp.allocation.toFixed(2)}</span>
                         </div>
                     </div>
-                `;
-            }).join('');
-        }
-
-        // Get Trading Signal
-        function getSignal(change, price) {
-            // Simple strategy basée sur le momentum
-            if (change > 3) return 'BUY';
-            if (change < -3) return 'SELL';
-            if (change > 0 && change <= 3) return 'HOLD';
-            return 'WAIT';
-        }
-
-        // Analyze Asset
-        function analyzeAsset(symbol, price, type) {
-            const analysis = {
-                symbol: symbol,
-                price: price,
-                type: type,
-                recommendation: '',
-                confidence: 0,
-                allocation: 0
-            };
-
-            // Simple analysis based on price change and portfolio
-            const asset = type === 'crypto' 
-                ? marketData.crypto.find(c => c.symbol === symbol)
-                : marketData.stocks.find(s => s.symbol === symbol);
-
-            if (!asset) return;
-
-            const change = type === 'crypto' ? asset.change24h : asset.change;
-            
-            // Calculate confidence score
-            analysis.confidence = Math.min(100, Math.abs(change) * 10 + 50);
-            
-            // Determine recommendation
-            if (change > 2 && portfolio.cash >= CONFIG.MIN_POSITION) {
-                analysis.recommendation = 'ACHETER';
-                analysis.allocation = Math.min(portfolio.cash * 0.2, 100); // Max 20% ou 100€
-            } else if (change < -2) {
-                analysis.recommendation = 'ÉVITER';
-                analysis.allocation = 0;
-            } else {
-                analysis.recommendation = 'SURVEILLER';
-                analysis.allocation = 0;
-            }
-
-            // Display analysis
-            displayAnalysis(analysis, asset);
-        }
-
-        // Display Analysis
-        function displayAnalysis(analysis, asset) {
-            const container = document.getElementById('aiAnalysis');
-            
-            container.innerHTML = `
-                <div style="margin-bottom: 15px;">
-                    <strong>Analyse: ${analysis.symbol}</strong><br>
-                    Type: ${analysis.type === 'crypto' ? 'Cryptomonnaie' : 'Action'}<br>
-                    Prix actuel: ${analysis.type === 'crypto' ? '€' : '$'}${analysis.price.toFixed(2)}<br>
-                    Changement 24h: <span class="${asset.change24h || asset.change >= 0 ? 'positive' : 'negative'}">
-                        ${(asset.change24h || asset.change).toFixed(2)}%
-                    </span>
-                </div>
-                
-                <div style="margin-bottom: 15px;">
-                    <strong>Recommandation:</strong> 
-                    <span class="signal-badge signal-${analysis.recommendation === 'ACHETER' ? 'buy' : analysis.recommendation === 'ÉVITER' ? 'sell' : 'hold'}">
-                        ${analysis.recommendation}
-                    </span><br>
-                    Confiance: ${analysis.confidence.toFixed(0)}%<br>
-                    ${analysis.allocation > 0 ? `Allocation suggérée: €${analysis.allocation.toFixed(2)}` : ''}
-                </div>
-                
-                ${analysis.recommendation === 'ACHETER' ? `
-                    <button class="btn btn-success" onclick="executeBuy('${analysis.symbol}', ${analysis.price}, ${analysis.allocation}, '${analysis.type}')">
-                        Acheter ${analysis.symbol} pour €${analysis.allocation.toFixed(2)}
+                    <div style="padding: 10px; background: #f9fafb; border-radius: 8px;">
+                        ${opp.reasons.map(r => `• ${r}`).join('<br>')}
+                    </div>
+                    <button class="btn btn-execute" onclick="buyOpportunity('${opp.symbol}', ${opp.price}, ${opp.allocation})">
+                        💰 Acheter ${opp.symbol} pour €${opp.allocation.toFixed(2)}
                     </button>
-                ` : ''}
-            `;
+                </div>
+            `).join('');
+            
+            container.innerHTML = html;
         }
 
-        // Execute Buy Order
-        function executeBuy(symbol, price, amount, type) {
-            const totalCost = amount + CONFIG.BROKER_FEE;
+        // Afficher les positions
+        function updatePositions() {
+            const container = document.getElementById('myPositions');
             
-            if (totalCost > portfolio.cash) {
-                showAlert('danger', 'Fonds insuffisants', `Besoin de €${totalCost.toFixed(2)}, disponible: €${portfolio.cash.toFixed(2)}`);
-                return;
-            }
-
-            // Calculate quantity
-            const quantity = type === 'crypto' 
-                ? (amount / price).toFixed(6)
-                : Math.floor(amount / price);
-
-            // Add to portfolio
-            portfolio.positions.push({
-                symbol: symbol,
-                type: type,
-                quantity: parseFloat(quantity),
-                buyPrice: price,
-                currentPrice: price,
-                investment: amount,
-                value: amount,
-                pl: 0,
-                plPercent: 0
-            });
-
-            // Update cash
-            portfolio.cash -= totalCost;
-
-            // Add transaction
-            portfolio.transactions.push({
-                type: 'BUY',
-                symbol: symbol,
-                quantity: quantity,
-                price: price,
-                fee: CONFIG.BROKER_FEE,
-                timestamp: new Date().toISOString()
-            });
-
-            updatePortfolio();
-            showAlert('success', 'Ordre exécuté', `Acheté ${quantity} ${symbol} @ ${type === 'crypto' ? '€' : '$'}${price.toFixed(2)}`);
-        }
-
-        // Update Portfolio Display
-        function updatePortfolio() {
-            const container = document.getElementById('portfolioContent');
-            
-            if (portfolio.positions.length === 0) {
+            if (state.positions.length === 0) {
                 container.innerHTML = `
                     <p style="text-align: center; padding: 30px; color: #9ca3af;">
-                        Aucune position ouverte<br>
-                        <span style="font-size: 12px;">Cash disponible: €${portfolio.cash.toFixed(2)}</span>
+                        Aucune position active<br>
+                        <span style="font-size: 12px;">Ajoutez vos positions eToro ci-dessus</span>
                     </p>
                 `;
-            } else {
-                container.innerHTML = portfolio.positions.map(pos => {
-                    // Update current price
-                    const currentAsset = pos.type === 'crypto'
-                        ? marketData.crypto.find(c => c.symbol === pos.symbol)
-                        : marketData.stocks.find(s => s.symbol === pos.symbol);
-                    
-                    if (currentAsset) {
-                        pos.currentPrice = currentAsset.price;
-                        pos.value = pos.quantity * pos.currentPrice;
-                        pos.pl = pos.value - pos.investment;
-                        pos.plPercent = (pos.pl / pos.investment) * 100;
-                    }
-
-                    return `
-                        <div class="portfolio-item">
-                            <div class="portfolio-header">
-                                <div>
-                                    <strong>${pos.symbol}</strong>
-                                    <span style="font-size: 12px; color: #6b7280;"> x${pos.quantity}</span>
-                                </div>
-                                <div class="${pos.pl >= 0 ? 'positive' : 'negative'}">
-                                    ${pos.pl >= 0 ? '+' : ''}€${pos.pl.toFixed(2)}
-                                    (${pos.plPercent.toFixed(2)}%)
-                                </div>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; font-size: 12px; color: #6b7280;">
-                                <span>Achat: ${pos.type === 'crypto' ? '€' : '$'}${pos.buyPrice.toFixed(2)}</span>
-                                <span>Actuel: ${pos.type === 'crypto' ? '€' : '$'}${pos.currentPrice.toFixed(2)}</span>
-                                <span>Valeur: €${pos.value.toFixed(2)}</span>
-                            </div>
-                            <button class="btn btn-danger" style="width: 100%; margin-top: 10px; padding: 6px;"
-                                onclick="sellPosition('${pos.symbol}')">
-                                Vendre
-                            </button>
-                        </div>
-                    `;
-                }).join('');
+                return;
             }
-
-            // Update stats
+            
+            const html = state.positions.map(position => {
+                const currentPrice = state.marketData[position.symbol]?.price || position.buyPrice;
+                const analysis = analyzePositionData(position, currentPrice);
+                
+                return `
+                    <div style="padding: 15px; background: #f9fafb; border-radius: 10px; margin-bottom: 10px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <strong>${position.symbol}</strong>
+                            <span class="${analysis.netPL >= 0 ? 'positive' : 'negative'}">
+                                ${analysis.netPL >= 0 ? '+' : ''}€${analysis.netPL.toFixed(2)}
+                            </span>
+                        </div>
+                        <div style="font-size: 12px; color: #6b7280;">
+                            Qté: ${position.quantity.toFixed(4)} | Achat: €${position.buyPrice} | Actuel: €${currentPrice.toFixed(2)}
+                        </div>
+                        <button class="btn" style="background: var(--danger); color: white; width: 100%; margin-top: 10px; padding: 8px;"
+                            onclick="removePosition(${position.id})">
+                            Supprimer
+                        </button>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = html;
             updateStats();
         }
 
-        // Sell Position
-        function sellPosition(symbol) {
-            const posIndex = portfolio.positions.findIndex(p => p.symbol === symbol);
-            if (posIndex === -1) return;
-
-            const position = portfolio.positions[posIndex];
-            const saleValue = position.value - CONFIG.BROKER_FEE;
-            
-            portfolio.cash += saleValue;
-            portfolio.positions.splice(posIndex, 1);
-            
-            portfolio.transactions.push({
-                type: 'SELL',
-                symbol: symbol,
-                quantity: position.quantity,
-                price: position.currentPrice,
-                fee: CONFIG.BROKER_FEE,
-                pl: position.pl,
-                timestamp: new Date().toISOString()
-            });
-
-            updatePortfolio();
-            showAlert('success', 'Position vendue', `${symbol} vendu pour €${saleValue.toFixed(2)}`);
-        }
-
-        // Update Stats
+        // Mettre à jour les stats
         function updateStats() {
-            const positionsValue = portfolio.positions.reduce((sum, pos) => sum + pos.value, 0);
-            portfolio.totalValue = portfolio.cash + positionsValue;
+            let totalValue = 500;
+            let totalPL = 0;
+            let totalFees = 0;
             
-            const pl = portfolio.totalValue - CONFIG.INITIAL_CAPITAL;
-            const plPercent = (pl / CONFIG.INITIAL_CAPITAL) * 100;
-            
-            document.getElementById('portfolioValue').textContent = `€${portfolio.totalValue.toFixed(2)}`;
-            document.getElementById('availableCash').textContent = `€${portfolio.cash.toFixed(2)}`;
-            document.getElementById('openPositions').textContent = portfolio.positions.length;
-            document.getElementById('performance').textContent = `${plPercent >= 0 ? '+' : ''}${plPercent.toFixed(2)}%`;
-            document.getElementById('performance').className = `stat-value ${plPercent >= 0 ? 'positive' : 'negative'}`;
-            
-            // Daily P&L (simplified)
-            const dailyPL = portfolio.positions.reduce((sum, pos) => sum + pos.pl, 0);
-            document.getElementById('dailyPL').textContent = `${dailyPL >= 0 ? '+' : ''}€${dailyPL.toFixed(2)}`;
-            document.getElementById('dailyPL').className = `stat-value ${dailyPL >= 0 ? 'positive' : 'negative'}`;
-        }
-
-        // Auto Invest
-        function autoInvest() {
-            if (portfolio.cash < CONFIG.MIN_POSITION) {
-                showAlert('warning', 'Fonds insuffisants', 'Minimum €50 requis pour investir');
-                return;
-            }
-
-            // Find best opportunities
-            const opportunities = [...marketData.crypto, ...marketData.stocks]
-                .filter(asset => (asset.change24h || asset.change) > 2)
-                .sort((a, b) => (b.change24h || b.change) - (a.change24h || a.change))
-                .slice(0, 3);
-
-            if (opportunities.length === 0) {
-                showAlert('info', 'Aucune opportunité', 'Aucun actif avec momentum positif trouvé');
-                return;
-            }
-
-            // Split available cash
-            const amountPerAsset = Math.min(portfolio.cash / opportunities.length, 100);
-            
-            opportunities.forEach(asset => {
-                const type = asset.change24h !== undefined ? 'crypto' : 'stock';
-                executeBuy(asset.symbol, asset.price, amountPerAsset - CONFIG.BROKER_FEE, type);
+            state.positions.forEach(position => {
+                const currentPrice = state.marketData[position.symbol]?.price || position.buyPrice;
+                const analysis = analyzePositionData(position, currentPrice);
+                totalPL += analysis.netPL;
+                totalFees += analysis.totalFees;
             });
-        }
-
-        // Optimize Portfolio
-        function optimizePortfolio() {
-            // Sell losing positions
-            const losingPositions = portfolio.positions.filter(p => p.plPercent < -5);
-            losingPositions.forEach(pos => sellPosition(pos.symbol));
             
-            // Reinvest in winners
-            setTimeout(() => autoInvest(), 1000);
-        }
-
-        // Reset Portfolio
-        function resetPortfolio() {
-            if (confirm('Êtes-vous sûr de vouloir réinitialiser le portfolio?')) {
-                portfolio = {
-                    cash: 500,
-                    positions: [],
-                    transactions: [],
-                    totalValue: 500
-                };
-                updatePortfolio();
-                showAlert('info', 'Portfolio réinitialisé', 'Capital: €500');
-            }
-        }
-
-        // Fetch Forex Data (EUR/USD, etc.)
-        async function fetchForexData() {
-            try {
-                // Using exchangerate-api (free tier, no key needed for basic usage)
-                const response = await fetch('https://api.exchangerate-api.com/v4/latest/EUR');
-                const data = await response.json();
-                
-                if (data && data.rates) {
-                    const forexData = {
-                        EURUSD: data.rates.USD,
-                        EURGBP: data.rates.GBP,
-                        EURJPY: data.rates.JPY,
-                        EURCHF: data.rates.CHF,
-                        timestamp: data.date
-                    };
-                    
-                    // Afficher dans une nouvelle section
-                    displayForexData(forexData);
-                }
-            } catch (error) {
-                console.error('Erreur forex:', error);
-            }
-        }
-
-        // Display Forex Data
-        function displayForexData(forex) {
-            // Ajouter une section forex si elle n'existe pas
-            const existingForex = document.getElementById('forexSection');
-            if (!existingForex) {
-                const forexHTML = `
-                    <div class="analysis-box" style="background: #e0e7ff; margin-top: 15px;">
-                        <div class="analysis-title">💱 Taux de Change (EUR)</div>
-                        <div id="forexList">
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                                <div style="padding: 10px; background: white; border-radius: 8px;">
-                                    <div style="font-size: 12px; color: #6b7280;">EUR/USD</div>
-                                    <div style="font-size: 18px; font-weight: 600;">${forex.EURUSD.toFixed(4)}</div>
-                                </div>
-                                <div style="padding: 10px; background: white; border-radius: 8px;">
-                                    <div style="font-size: 12px; color: #6b7280;">EUR/GBP</div>
-                                    <div style="font-size: 18px; font-weight: 600;">${forex.EURGBP.toFixed(4)}</div>
-                                </div>
-                                <div style="padding: 10px; background: white; border-radius: 8px;">
-                                    <div style="font-size: 12px; color: #6b7280;">EUR/JPY</div>
-                                    <div style="font-size: 18px; font-weight: 600;">${forex.EURJPY.toFixed(2)}</div>
-                                </div>
-                                <div style="padding: 10px; background: white; border-radius: 8px;">
-                                    <div style="font-size: 12px; color: #6b7280;">EUR/CHF</div>
-                                    <div style="font-size: 18px; font-weight: 600;">${forex.EURCHF.toFixed(4)}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                document.querySelector('.card').insertAdjacentHTML('beforeend', forexHTML);
-            }
-        }
-
-        // Fetch Commodity Data (Gold, Silver, Oil)
-        async function fetchCommodityData() {
-            try {
-                // Using GoldAPI alternative or metals-api (free tier)
-                const response = await fetch('https://api.metals.live/v1/spot');
-                const data = await response.json();
-                
-                if (data) {
-                    const commodities = [
-                        { symbol: 'GOLD', name: 'Or', price: data.gold || 2050, change: 0.8 },
-                        { symbol: 'SILVER', name: 'Argent', price: data.silver || 24.5, change: 1.2 },
-                        { symbol: 'PLATINUM', name: 'Platine', price: data.platinum || 950, change: -0.5 }
-                    ];
-                    
-                    displayCommodityData(commodities);
-                }
-            } catch (error) {
-                // Alternative: utiliser les prix du jour depuis une autre source
-                try {
-                    const response = await fetch('https://api.frankfurter.app/latest?from=XAU&to=EUR');
-                    const data = await response.json();
-                    
-                    if (data && data.rates) {
-                        const goldPrice = 1 / data.rates.EUR;
-                        displayCommodityData([
-                            { symbol: 'GOLD', name: 'Or (oz)', price: goldPrice, change: 0.8 }
-                        ]);
-                    }
-                } catch (err) {
-                    console.error('Erreur commodities:', err);
-                }
-            }
-        }
-
-        // Display Commodity Data
-        function displayCommodityData(commodities) {
-            const existingComm = document.getElementById('commoditySection');
-            if (!existingComm && commodities.length > 0) {
-                const commHTML = `
-                    <div class="analysis-box" style="background: #fef3c7; margin-top: 15px;">
-                        <div class="analysis-title">🏅 Matières Premières</div>
-                        <div id="commodityList">
-                            ${commodities.map(comm => `
-                                <div class="crypto-item" style="margin-bottom: 8px;">
-                                    <div class="asset-info">
-                                        <div class="asset-symbol">${comm.symbol}</div>
-                                        <div class="asset-name">${comm.name}</div>
-                                    </div>
-                                    <div class="asset-price">
-                                        <div class="price-value">${comm.price.toFixed(2)}</div>
-                                        <div class="price-change ${comm.change >= 0 ? 'positive' : 'negative'}">
-                                            ${comm.change >= 0 ? '+' : ''}${comm.change.toFixed(2)}%
-                                        </div>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-                document.querySelector('.card').insertAdjacentHTML('beforeend', commHTML);
-            }
-        }
-
-        // Enhanced Search with multiple sources
-        async function searchAsset() {
-            const symbol = document.getElementById('searchInput').value.toUpperCase();
-            if (!symbol) return;
-
-            showAlert('info', 'Recherche', `Recherche de ${symbol} en cours...`);
-
-            // Search crypto first
-            try {
-                const response = await fetch(`https://api.coingecko.com/api/v3/search?query=${symbol}`);
-                const data = await response.json();
-                
-                if (data.coins && data.coins.length > 0) {
-                    const coin = data.coins[0];
-                    const priceResponse = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coin.id}&vs_currencies=eur&include_24hr_change=true`);
-                    const priceData = await priceResponse.json();
-                    
-                    if (priceData[coin.id]) {
-                        const price = priceData[coin.id].eur;
-                        const change = priceData[coin.id].eur_24h_change;
-                        
-                        marketData.crypto.unshift({
-                            symbol: coin.symbol.toUpperCase(),
-                            name: coin.name,
-                            price: price,
-                            change24h: change
-                        });
-                        
-                        displayCryptoData();
-                        analyzeAsset(coin.symbol.toUpperCase(), price, 'crypto');
-                        showAlert('success', 'Trouvé', `${coin.name} ajouté à la liste`);
-                        return;
-                    }
-                }
-            } catch (error) {
-                console.error('Erreur recherche crypto:', error);
-            }
-
-            // If not found in crypto, try stocks
-            try {
-                const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`;
-                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-                
-                const response = await fetch(proxyUrl);
-                const data = await response.json();
-                
-                if (data.chart && data.chart.result && data.chart.result[0]) {
-                    const quote = data.chart.result[0];
-                    const price = quote.meta.regularMarketPrice;
-                    const previousClose = quote.meta.previousClose;
-                    const change = ((price - previousClose) / previousClose * 100);
-                    
-                    const stock = {
-                        symbol: symbol,
-                        name: quote.meta.longName || symbol,
-                        price: price,
-                        change: change
-                    };
-                    
-                    marketData.stocks.unshift(stock);
-                    displayStockData();
-                    analyzeAsset(symbol, price, 'stock');
-                    showAlert('success', 'Trouvé', `${stock.name} ajouté à la liste`);
-                    return;
-                }
-            } catch (error) {
-                console.error('Erreur recherche stock:', error);
-            }
-
-            showAlert('warning', 'Non trouvé', `${symbol} non trouvé. Vérifiez le symbole.`);
-        }
-
-        // Scan Market - Enhanced with multiple data sources
-        async function scanMarket() {
-            showAlert('info', 'Scan en cours', 'Analyse des marchés...');
+            totalValue = 500 + totalPL;
+            const performance = (totalPL / 500) * 100;
             
-            await Promise.all([
-                fetchCryptoData(),
-                fetchStockData(),
-                fetchForexData(),
-                fetchCommodityData(),
-                fetchTrendingAssets()
-            ]);
+            document.getElementById('totalValue').textContent = `€${totalValue.toFixed(2)}`;
+            document.getElementById('totalPL').textContent = `${totalPL >= 0 ? '+' : ''}€${totalPL.toFixed(2)}`;
+            document.getElementById('totalPL').className = `stat-value ${totalPL >= 0 ? 'positive' : 'negative'}`;
+            document.getElementById('totalFees').textContent = `€${totalFees.toFixed(2)}`;
+            document.getElementById('performance').textContent = `${performance >= 0 ? '+' : ''}${performance.toFixed(2)}%`;
+            document.getElementById('performance').className = `stat-value ${performance >= 0 ? 'positive' : 'negative'}`;
+            document.getElementById('openPositions').textContent = state.positions.length;
             
-            updateRecommendations();
+            const investedAmount = state.positions.reduce((sum, p) => sum + p.investment, 0);
+            document.getElementById('availableCash').textContent = `€${(500 - investedAmount).toFixed(2)}`;
+        }
+
+        // Timer de refresh
+        function updateTimer() {
+            state.refreshCountdown--;
+            state.secondsElapsed++;
+            
+            if (state.refreshCountdown <= 0) {
+                state.refreshCountdown = 30;
+                fullRefresh();
+            }
+            
+            document.getElementById('refreshTimer').textContent = `${state.refreshCountdown}s`;
+            document.getElementById('currentTime').textContent = new Date().toLocaleTimeString();
             document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
         }
 
-        // Fetch Trending Assets
-        async function fetchTrendingAssets() {
-            try {
-                // Get trending from CoinGecko
-                const response = await fetch('https://api.coingecko.com/api/v3/search/trending');
-                const data = await response.json();
-                
-                if (data.coins) {
-                    const trending = data.coins.slice(0, 5).map(item => ({
-                        symbol: item.item.symbol,
-                        name: item.item.name,
-                        marketCapRank: item.item.market_cap_rank,
-                        thumb: item.item.thumb
-                    }));
-                    
-                    displayTrendingAssets(trending);
-                }
-            } catch (error) {
-                console.error('Erreur trending:', error);
-            }
+        // Refresh complet
+        async function fullRefresh() {
+            const prices = await fetchRealTimePrices();
+            displayLivePrices(prices);
+            analyzeAllPositions();
+            updatePositions();
+            
+            // Analyse détaillée
+            const analysis = generateDetailedAnalysis(prices);
+            document.getElementById('detailedAnalysis').innerHTML = analysis;
         }
 
-        // Display Trending Assets
-        function displayTrendingAssets(trending) {
-            const existingTrending = document.getElementById('trendingSection');
-            if (!existingTrending && trending.length > 0) {
-                const trendingHTML = `
-                    <div class="analysis-box" style="background: #dcfce7; margin-top: 15px;">
-                        <div class="analysis-title">🔥 Tendances du Jour</div>
-                        <div id="trendingList">
-                            ${trending.map(asset => `
-                                <div style="display: flex; align-items: center; gap: 10px; padding: 8px; background: white; border-radius: 8px; margin-bottom: 8px;">
-                                    <img src="${asset.thumb}" style="width: 24px; height: 24px; border-radius: 50%;">
-                                    <div style="flex: 1;">
-                                        <div style="font-weight: 600;">${asset.symbol}</div>
-                                        <div style="font-size: 12px; color: #6b7280;">${asset.name}</div>
-                                    </div>
-                                    <div style="font-size: 12px; color: #6b7280;">
-                                        Rank #${asset.marketCapRank || 'N/A'}
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-                document.querySelector('.card').insertAdjacentHTML('beforeend', trendingHTML);
-            }
-        }
-
-        // Fetch Market Global Data
-        async function fetchMarketGlobal() {
-            try {
-                const response = await fetch('https://api.coingecko.com/api/v3/global');
-                const data = await response.json();
-                
-                if (data.data) {
-                    const globalData = {
-                        totalMarketCap: data.data.total_market_cap.eur,
-                        totalVolume: data.data.total_volume.eur,
-                        marketCapChange: data.data.market_cap_change_percentage_24h_usd,
-                        btcDominance: data.data.market_cap_percentage.btc,
-                        ethDominance: data.data.market_cap_percentage.eth
-                    };
-                    
-                    displayMarketGlobal(globalData);
-                }
-            } catch (error) {
-                console.error('Erreur global market:', error);
-            }
-        }
-
-        // Display Market Global Data
-        function displayMarketGlobal(global) {
-            const marketInfo = document.getElementById('marketInfo');
-            if (marketInfo) {
-                marketInfo.innerHTML = `
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px; background: #f3f4f6; border-radius: 10px; margin-bottom: 20px;">
-                        <div>
-                            <div style="font-size: 11px; color: #6b7280;">Market Cap Total</div>
-                            <div style="font-size: 16px; font-weight: 600;">€${(global.totalMarketCap / 1e9).toFixed(2)}B</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 11px; color: #6b7280;">Volume 24h</div>
-                            <div style="font-size: 16px; font-weight: 600;">€${(global.totalVolume / 1e9).toFixed(2)}B</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 11px; color: #6b7280;">BTC Dominance</div>
-                            <div style="font-size: 16px; font-weight: 600;">${global.btcDominance.toFixed(1)}%</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 11px; color: #6b7280;">Market Change 24h</div>
-                            <div style="font-size: 16px; font-weight: 600;" class="${global.marketCapChange >= 0 ? 'positive' : 'negative'}">
-                                ${global.marketCapChange >= 0 ? '+' : ''}${global.marketCapChange.toFixed(2)}%
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-        }
-
-        // Update Recommendations avec IA prédictive
-        function updateRecommendations() {
-            const container = document.getElementById('recommendations');
+        // Générer analyse détaillée
+        function generateDetailedAnalysis(prices) {
+            const trending = Object.entries(prices)
+                .sort((a, b) => Math.abs(b[1].change) - Math.abs(a[1].change))
+                .slice(0, 3);
             
-            // Analyser les performances de la veille
-            const yesterdayPerf = aiAnalysis.analyzeYesterdayPerformance();
-            const successRate = aiAnalysis.calculateSuccessRate();
+            const bullish = Object.entries(prices).filter(([_, data]) => data.change > 3);
+            const bearish = Object.entries(prices).filter(([_, data]) => data.change < -3);
             
-            // Générer les ordres optimaux
-            const optimalOrders = aiAnalysis.generateOptimalOrders();
-            
-            // Sauvegarder les données du jour
-            aiAnalysis.saveDailyData();
-            
-            container.innerHTML = `
-                <div style="margin-bottom: 15px; padding: 12px; background: #e0e7ff; border-radius: 8px;">
-                    <strong>📊 Analyse Prédictive IA</strong><br>
-                    <span style="font-size: 12px; color: #4b5563;">
-                        Taux de réussite: ${successRate.rate.toFixed(1)}% (${successRate.correct}/${successRate.total} trades)<br>
-                        ${yesterdayPerf ? `Performance veille: ${yesterdayPerf.filter(p => p.wasCorrect).length}/${yesterdayPerf.length} prédictions correctes` : 'Première analyse'}
-                    </span>
+            return `
+                <div style="margin-bottom: 15px;">
+                    <strong>📊 Tendance Générale:</strong> 
+                    ${bullish.length > bearish.length ? 
+                        '<span class="positive">Marché Haussier</span>' : 
+                        '<span class="negative">Marché Baissier</span>'}
                 </div>
                 
                 <div style="margin-bottom: 15px;">
-                    <strong>🎯 Ordres Optimaux du Jour:</strong>
+                    <strong>🔥 Plus Gros Mouvements:</strong><br>
+                    ${trending.map(([symbol, data]) => 
+                        `• ${symbol}: <span class="${data.change >= 0 ? 'positive' : 'negative'}">
+                            ${data.change >= 0 ? '+' : ''}${data.change.toFixed(2)}%
+                        </span>`
+                    ).join('<br>')}
                 </div>
                 
-                ${optimalOrders.length > 0 ? optimalOrders.map(order => `
-                    <div style="padding: 12px; background: #f9fafb; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid ${order.confidence > 80 ? '#10b981' : '#f59e0b'};">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <div>
-                                <strong>${order.symbol}</strong>
-                                <span class="signal-badge signal-buy" style="margin-left: 8px;">BUY</span>
-                            </div>
-                            <span style="font-weight: 600;">Confiance: ${order.confidence}%</span>
-                        </div>
-                        <div style="font-size: 12px; color: #4b5563; line-height: 1.6;">
-                            Prix: €${order.price.toFixed(2)} → Target: €${order.targetPrice.toFixed(2)}<br>
-                            Stop Loss: €${order.stopLoss.toFixed(2)}<br>
-                            Allocation: €${order.allocation.toFixed(2)}<br>
-                            <strong>Raisons:</strong><br>
-                            ${order.reasoning.map(r => `• ${r}`).join('<br>')}
-                        </div>
-                        <button class="btn btn-success" style="width: 100%; margin-top: 10px; padding: 8px;"
-                            onclick="executeOptimalOrder('${order.symbol}', ${order.price}, ${order.allocation}, ${order.targetPrice}, ${order.stopLoss})">
-                            Exécuter cet ordre
-                        </button>
-                    </div>
-                `) : '<p style="color: #9ca3af; text-align: center;">Aucun signal fort détecté aujourd\'hui</p>'}
+                <div style="margin-bottom: 15px;">
+                    <strong>💡 Stratégie Recommandée:</strong><br>
+                    ${bullish.length > bearish.length ? 
+                        '• Profiter du momentum haussier<br>• Prendre des profits sur les gains >10%<br>• Garder 30% en cash pour corrections' :
+                        '• Attendre la stabilisation<br>• Acheter les survendus (-5% ou plus)<br>• Éviter les FOMO sur rebonds'
+                    }
+                </div>
                 
-                <button class="btn btn-primary" style="width: 100%; margin-top: 15px;"
-                    onclick="executeAllOptimalOrders()">
-                    🚀 Exécuter tous les ordres optimaux
-                </button>
-                
-                ${yesterdayPerf && yesterdayPerf.length > 0 ? `
-                    <div style="margin-top: 20px; padding: 12px; background: #fef3c7; border-radius: 8px;">
-                        <strong>📈 Performance de la veille:</strong><br>
-                        <div style="font-size: 12px; color: #78350f; margin-top: 8px;">
-                            ${yesterdayPerf.slice(0, 3).map(p => `
-                                ${p.symbol}: ${p.wasCorrect ? '✅' : '❌'} 
-                                ${p.performance >= 0 ? '+' : ''}${p.performance.toFixed(2)}%
-                                (Signal: ${p.signal})
-                            `).join('<br>')}
-                        </div>
-                    </div>
-                ` : ''}
+                <div style="padding: 12px; background: #fef3c7; border-radius: 8px;">
+                    <strong>⚠️ Gestion du Risque:</strong><br>
+                    • Stop Loss: -10% max par position<br>
+                    • Take Profit: +15% recommandé<br>
+                    • Position max: 30% du capital<br>
+                    • Toujours calculer les frais eToro
+                </div>
             `;
         }
 
-        // Exécuter un ordre optimal
-        function executeOptimalOrder(symbol, price, allocation, targetPrice, stopLoss) {
-            // Enregistrer les targets
-            const position = {
-                symbol: symbol,
-                targetPrice: targetPrice,
-                stopLoss: stopLoss,
-                entryPrice: price
-            };
-            
-            localStorage.setItem(`position_${symbol}`, JSON.stringify(position));
-            
-            // Exécuter l'achat
-            executeBuy(symbol, price, allocation - CONFIG.BROKER_FEE, 
-                marketData.crypto.find(c => c.symbol === symbol) ? 'crypto' : 'stock');
-            
-            // Enregistrer la prédiction pour suivi
-            const predictions = JSON.parse(localStorage.getItem('predictionHistory')) || [];
-            predictions.push({
-                symbol: symbol,
-                predictedDirection: 'BUY',
-                entryPrice: price,
-                targetPrice: targetPrice,
-                date: new Date().toISOString(),
-                pending: true
-            });
-            localStorage.setItem('predictionHistory', JSON.stringify(predictions));
-        }
-
-        // Exécuter tous les ordres optimaux
-        function executeAllOptimalOrders() {
-            const orders = aiAnalysis.generateOptimalOrders();
-            
-            if (orders.length === 0) {
-                showAlert('warning', 'Aucun ordre', 'Aucun ordre optimal trouvé');
-                return;
-            }
-            
-            let executed = 0;
-            for (let order of orders) {
-                if (portfolio.cash >= order.allocation) {
-                    executeOptimalOrder(order.symbol, order.price, order.allocation, 
-                                      order.targetPrice, order.stopLoss);
-                    executed++;
-                }
-            }
-            
-            showAlert('success', 'Ordres exécutés', `${executed} ordres optimaux exécutés`);
-        }
-
-        // Vérifier les stops et targets automatiquement
-        function checkStopsAndTargets() {
-            for (let position of portfolio.positions) {
-                const savedPosition = localStorage.getItem(`position_${position.symbol}`);
-                if (savedPosition) {
-                    const targets = JSON.parse(savedPosition);
-                    
-                    // Vérifier Stop Loss
-                    if (position.currentPrice <= targets.stopLoss) {
-                        showAlert('danger', 'Stop Loss atteint!', 
-                            `${position.symbol} a atteint le stop loss. Vente automatique.`);
-                        sellPosition(position.symbol);
-                    }
-                    // Vérifier Target
-                    else if (position.currentPrice >= targets.targetPrice) {
-                        showAlert('success', 'Target atteint!', 
-                            `${position.symbol} a atteint l'objectif. Prise de profits.`);
-                        sellPosition(position.symbol);
-                    }
-                }
-            }
-        }
-
-        // Show Alert
+        // Afficher une alerte
         function showAlert(type, title, message) {
             const container = document.getElementById('alertsContainer');
             const alert = document.createElement('div');
@@ -1639,117 +1140,73 @@
             setTimeout(() => alert.remove(), 5000);
         }
 
-        // Update Time
-        function updateTime() {
-            document.getElementById('currentTime').textContent = new Date().toLocaleTimeString();
+        // Fonctions d'action
+        function removePosition(id) {
+            state.positions = state.positions.filter(p => p.id !== id);
+            localStorage.setItem('positions', JSON.stringify(state.positions));
+            updatePositions();
+            analyzeAllPositions();
         }
 
-        // Initialize - Enhanced with AI Analysis
+        function clearPositions() {
+            if (confirm('Supprimer toutes les positions ?')) {
+                state.positions = [];
+                localStorage.setItem('positions', JSON.stringify(state.positions));
+                updatePositions();
+                analyzeAllPositions();
+            }
+        }
+
+        function analyzePosition() {
+            analyzeAllPositions();
+            showAlert('success', 'Analyse complète', 'Toutes les positions ont été analysées');
+        }
+
+        function executeAction(action, symbol, price) {
+            showAlert('info', `${action} ${symbol}`, `Ordre à exécuter sur eToro @ €${price.toFixed(2)}`);
+        }
+
+        function buyOpportunity(symbol, price, amount) {
+            // Ajouter automatiquement à mes positions
+            const position = {
+                id: Date.now(),
+                symbol,
+                buyPrice: price,
+                quantity: amount / price,
+                investment: amount,
+                timestamp: Date.now()
+            };
+            
+            state.positions.push(position);
+            localStorage.setItem('positions', JSON.stringify(state.positions));
+            
+            showAlert('success', 'Position ajoutée', `${symbol} ajouté au portfolio`);
+            updatePositions();
+            analyzeAllPositions();
+        }
+
+        // Initialisation
         document.addEventListener('DOMContentLoaded', async function() {
-            console.log('CoPilot Trading avec IA Prédictive initialisé');
+            console.log('CoPilot Trading Pro - Analyse temps réel initialisée');
             
-            // Add market info section
-            const marketInfoHTML = '<div id="marketInfo"></div>';
-            document.querySelector('.main-header').insertAdjacentHTML('afterend', marketInfoHTML);
+            // Démarrer les timers
+            setInterval(updateTimer, 1000);
             
-            // Add AI Dashboard
-            const aiDashboardHTML = `
-                <div class="card" style="margin-bottom: 20px;">
-                    <div class="card-header">
-                        <h2 class="card-title">🤖 IA Prédictive - Analyse de Performance</h2>
-                    </div>
-                    <div id="aiDashboard" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
-                        <div style="text-align: center; padding: 15px; background: #f9fafb; border-radius: 8px;">
-                            <div style="font-size: 11px; color: #6b7280;">Prédictions Totales</div>
-                            <div style="font-size: 24px; font-weight: 700;" id="totalPredictions">0</div>
-                        </div>
-                        <div style="text-align: center; padding: 15px; background: #f9fafb; border-radius: 8px;">
-                            <div style="font-size: 11px; color: #6b7280;">Taux de Succès</div>
-                            <div style="font-size: 24px; font-weight: 700;" id="successRate">0%</div>
-                        </div>
-                        <div style="text-align: center; padding: 15px; background: #f9fafb; border-radius: 8px;">
-                            <div style="font-size: 11px; color: #6b7280;">Profit IA</div>
-                            <div style="font-size: 24px; font-weight: 700;" id="aiProfit">€0</div>
-                        </div>
-                        <div style="text-align: center; padding: 15px; background: #f9fafb; border-radius: 8px;">
-                            <div style="font-size: 11px; color: #6b7280;">Meilleur Trade</div>
-                            <div style="font-size: 24px; font-weight: 700;" id="bestTrade">--</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.querySelector('.container').insertAdjacentHTML('afterbegin', aiDashboardHTML);
+            // Premier refresh
+            await fullRefresh();
             
-            // Update time
-            setInterval(updateTime, 1000);
-            updateTime();
-            
-            // Initial scan with all data sources
-            await scanMarket();
-            await fetchMarketGlobal();
-            
-            // Update AI Dashboard
-            updateAIDashboard();
-            
-            // Auto refresh every 30 seconds
+            // Refresh automatique
             setInterval(async () => {
-                await scanMarket();
-                checkStopsAndTargets(); // Vérifier stops et targets
-                updateAIDashboard();
-            }, CONFIG.UPDATE_INTERVAL);
+                const prices = await fetchRealTimePrices();
+                displayLivePrices(prices);
+                
+                // Mise à jour des analyses toutes les 5 secondes
+                if (state.secondsElapsed % 5 === 0) {
+                    analyzeAllPositions();
+                }
+            }, 1000);
             
-            setInterval(fetchMarketGlobal, 60000); // Global data every minute
-            
-            // Load saved portfolio
-            const saved = localStorage.getItem('portfolio');
-            if (saved) {
-                portfolio = JSON.parse(saved);
-                updatePortfolio();
-            }
-            
-            // Save portfolio periodically
-            setInterval(() => {
-                localStorage.setItem('portfolio', JSON.stringify(portfolio));
-            }, 5000);
-            
-            // Message de bienvenue avec analyse
-            const history = Object.keys(marketData.dailyHistory).length;
-            if (history > 0) {
-                showAlert('success', 'IA Activée', 
-                    `Système prêt avec ${history} jours d'historique. Analyse prédictive en cours...`);
-            } else {
-                showAlert('info', 'Première utilisation', 
-                    'Le système va commencer à collecter des données pour améliorer les prédictions');
-            }
-        });
-
-        // Update AI Dashboard
-        function updateAIDashboard() {
-            const predictions = JSON.parse(localStorage.getItem('predictionHistory')) || [];
-            const successRate = aiAnalysis.calculateSuccessRate();
-            
-            // Calculer le profit des trades IA
-            const aiTrades = portfolio.transactions.filter(t => t.aiGenerated);
-            const aiProfit = aiTrades.reduce((sum, t) => sum + (t.pl || 0), 0);
-            
-            // Meilleur trade
-            const bestTrade = portfolio.transactions
-                .filter(t => t.pl > 0)
-                .sort((a, b) => b.pl - a.pl)[0];
-            
-            document.getElementById('totalPredictions').textContent = predictions.length;
-            document.getElementById('successRate').textContent = `${successRate.rate.toFixed(1)}%`;
-            document.getElementById('aiProfit').textContent = `€${aiProfit.toFixed(2)}`;
-            document.getElementById('aiProfit').className = aiProfit >= 0 ? 'positive' : 'negative';
-            document.getElementById('bestTrade').textContent = bestTrade ? 
-                `${bestTrade.symbol} +${bestTrade.pl.toFixed(2)}€` : '--';
-        }
-
-        // Handle Enter key in search
-        document.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && document.activeElement.id === 'searchInput') {
-                searchAsset();
-            }
+            showAlert('success', 'Système Live', 'Analyse temps réel activée - Mise à jour chaque seconde');
         });
     </script>
 </body>

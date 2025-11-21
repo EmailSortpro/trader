@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CoPilot Trading Pro - Analyse Seconde par Seconde eToro</title>
+    <title>GTO Poker Trainer - Interactive Training</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -11,1202 +12,1278 @@
             box-sizing: border-box;
         }
 
-        :root {
-            --primary: #2563eb;
-            --secondary: #7c3aed;
-            --success: #10b981;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --dark: #1f2937;
-            --light: #f9fafb;
-        }
-
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            color: #e2e8f0;
             min-height: 100vh;
-            color: #333;
+            padding: 20px;
         }
 
         .container {
-            max-width: 1800px;
+            max-width: 1600px;
             margin: 0 auto;
-            padding: 15px;
+            display: grid;
+            grid-template-columns: 1.2fr 1fr 1fr;
+            gap: 20px;
         }
 
-        /* Header avec Timer Live */
-        .main-header {
-            background: white;
-            border-radius: 15px;
+        .panel {
+            background: linear-gradient(135deg, #1e293b 0%, #2d3748 100%);
+            border: 2px solid #475569;
+            border-radius: 12px;
             padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            box-shadow: 0 20px 25px rgba(0, 0, 0, 0.5);
         }
 
-        .header-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .panel-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #60a5fa;
             margin-bottom: 15px;
-        }
-
-        .live-timer {
             display: flex;
             align-items: center;
-            gap: 15px;
-            background: #1f2937;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 10px;
+            gap: 10px;
+            border-bottom: 2px solid #475569;
+            padding-bottom: 10px;
         }
 
-        .timer-seconds {
-            font-size: 24px;
-            font-weight: 700;
-            color: #10b981;
-            min-width: 100px;
-        }
-
-        .refresh-indicator {
-            width: 10px;
-            height: 10px;
-            background: #10b981;
+        /* POKER TABLE */
+        .poker-table {
+            background: linear-gradient(135deg, #15803d 0%, #166534 100%);
+            border: 3px solid #10b981;
             border-radius: 50%;
-            animation: pulse 1s infinite;
+            width: 100%;
+            aspect-ratio: 2/1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3), inset 0 0 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .poker-table::before {
+            content: 'POKER';
+            position: absolute;
+            font-size: 48px;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.1);
+            letter-spacing: 8px;
+        }
+
+        .seats-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .seat {
+            position: absolute;
+            width: 110px;
+            height: 100px;
+            background: rgba(30, 41, 59, 0.9);
+            border: 2px solid #475569;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            font-size: 11px;
+            padding: 8px;
+            text-align: center;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .seat:hover {
+            background: rgba(60, 80, 120, 0.9);
+            border-color: #60a5fa;
+        }
+
+        .seat.hero {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+            border-color: #60a5fa;
+            box-shadow: 0 0 30px rgba(96, 165, 250, 0.8);
+        }
+
+        .seat.active-action {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border-color: #f59e0b;
+            box-shadow: 0 0 30px rgba(245, 158, 11, 0.8);
+            animation: pulse 1.5s infinite;
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.2); }
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
 
-        /* Position Manager */
-        .position-manager {
-            background: linear-gradient(135deg, #fef3c7, #fde68a);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
+        .seat-label {
+            font-weight: bold;
+            color: #60a5fa;
         }
 
-        .position-input {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
+        .seat-stack {
+            font-size: 10px;
+            color: #cbd5e1;
         }
 
-        .input-group {
+        .seat-action {
+            font-size: 9px;
+            color: #34d399;
+            font-weight: bold;
+            margin-top: 3px;
+        }
+
+        .seat-hand {
+            font-size: 10px;
+            color: #fbbf24;
+            font-weight: bold;
+        }
+
+        .seat:nth-child(1) { left: 50%; top: -55px; transform: translateX(-50%); }
+        .seat:nth-child(2) { right: -55px; top: 15%; }
+        .seat:nth-child(3) { right: -55px; bottom: 15%; }
+        .seat:nth-child(4) { left: 50%; bottom: -55px; transform: translateX(-50%); }
+        .seat:nth-child(5) { left: -55px; bottom: 15%; }
+        .seat:nth-child(6) { left: -55px; top: 15%; }
+
+        .board-cards {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            bottom: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .card {
+            width: 55px;
+            height: 85px;
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid #1e293b;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 20px;
+            color: #1e293b;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .card.hidden {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: #fff;
+            font-size: 12px;
+        }
+
+        .pot-display {
+            position: absolute;
+            top: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.95);
+            border: 2px solid #60a5fa;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            color: #34d399;
+            font-size: 14px;
+        }
+
+        /* CONTROLS */
+        .controls {
             display: flex;
             flex-direction: column;
+            gap: 12px;
+            margin-top: 15px;
         }
 
-        .input-label {
-            font-size: 11px;
-            color: #78350f;
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 12px;
+            color: #cbd5e1;
+            font-weight: 600;
             text-transform: uppercase;
-            margin-bottom: 5px;
-            font-weight: 600;
+            letter-spacing: 0.5px;
         }
 
-        .input-field {
-            padding: 10px;
-            border: 2px solid #fbbf24;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            background: white;
+        select, input {
+            background: rgba(15, 23, 42, 0.8);
+            border: 2px solid #475569;
+            color: #e2e8f0;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        .input-field:focus {
+        select:focus, input:focus {
             outline: none;
-            border-color: #f59e0b;
+            border-color: #3b82f6;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
         }
 
-        /* Live Analysis Box */
-        .live-analysis {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-            position: relative;
-        }
-
-        .analysis-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #e5e7eb;
-        }
-
-        .analysis-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--dark);
-        }
-
-        .analysis-timestamp {
+        button {
+            padding: 11px 16px;
+            border: 2px solid #475569;
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+            color: #fff;
+            border-radius: 6px;
             font-size: 12px;
-            color: #6b7280;
-            font-weight: 600;
-        }
-
-        /* Real-time Prices Grid */
-        .prices-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .price-card {
-            background: #f9fafb;
-            padding: 12px;
-            border-radius: 10px;
-            text-align: center;
-            border: 2px solid transparent;
-            transition: all 0.3s;
-        }
-
-        .price-card.buy-signal {
-            border-color: var(--success);
-            background: #d1fae5;
-        }
-
-        .price-card.sell-signal {
-            border-color: var(--danger);
-            background: #fee2e2;
-        }
-
-        .price-symbol {
-            font-weight: 700;
-            font-size: 14px;
-            color: var(--dark);
-        }
-
-        .price-value {
-            font-size: 18px;
-            font-weight: 700;
-            margin: 5px 0;
-        }
-
-        .price-change {
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .positive { color: var(--success); }
-        .negative { color: var(--danger); }
-
-        /* Action Cards */
-        .action-card {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 15px;
-            border-left: 5px solid var(--primary);
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-        }
-
-        .action-urgent {
-            border-left-color: var(--danger);
-            animation: urgentPulse 2s infinite;
-        }
-
-        @keyframes urgentPulse {
-            0%, 100% { box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
-            50% { box-shadow: 0 3px 20px rgba(239, 68, 68, 0.3); }
-        }
-
-        .action-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .action-type {
-            display: inline-block;
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 700;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .action-buy {
-            background: var(--success);
-            color: white;
+        button:hover {
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+            border-color: #60a5fa;
+            box-shadow: 0 0 20px rgba(96, 165, 250, 0.5);
+            transform: translateY(-2px);
         }
 
-        .action-sell {
-            background: var(--danger);
-            color: white;
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
         }
 
-        .action-hold {
-            background: var(--warning);
-            color: white;
+        .btn-primary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-color: #10b981;
         }
 
-        /* P&L Calculator */
-        .pl-calculator {
-            background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
-            border-radius: 12px;
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+            border-color: #34d399;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+        }
+
+        /* ACTION HISTORY */
+        .action-history {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 15px 0;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 11px;
+        }
+
+        .action-item {
+            padding: 6px;
+            margin: 4px 0;
+            background: rgba(60, 80, 120, 0.3);
+            border-left: 3px solid #60a5fa;
+            border-radius: 3px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* DECISION AREA */
+        .decision-panel {
+            background: rgba(30, 41, 59, 0.9);
+            border: 2px solid #3b82f6;
+            border-radius: 10px;
             padding: 15px;
             margin: 15px 0;
         }
 
-        .pl-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px dashed #9ca3af;
-        }
-
-        .pl-row:last-child {
-            border-bottom: none;
-            padding-top: 12px;
-            margin-top: 8px;
-            border-top: 2px solid #6366f1;
-            font-weight: 700;
-            font-size: 16px;
-        }
-
-        /* EToro Fees Display */
-        .etoro-fees {
-            background: #fee2e2;
-            border-radius: 10px;
-            padding: 12px;
-            margin: 10px 0;
-        }
-
-        .fee-item {
-            display: flex;
-            justify-content: space-between;
+        .decision-title {
+            color: #60a5fa;
+            font-weight: bold;
+            margin-bottom: 12px;
             font-size: 13px;
-            padding: 5px 0;
         }
 
-        /* Buttons */
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 10px;
-            font-weight: 600;
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .action-btn {
+            padding: 12px 10px;
+            border: 2px solid #475569;
+            background: rgba(15, 23, 42, 0.8);
+            color: #e2e8f0;
+            border-radius: 6px;
             cursor: pointer;
-            transition: all 0.3s;
-            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
             text-transform: uppercase;
+            font-size: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
         }
 
-        .btn-execute {
-            background: linear-gradient(135deg, var(--success), #059669);
-            color: white;
+        .action-btn:hover {
+            background: rgba(60, 80, 120, 0.9);
+            border-color: #60a5fa;
+        }
+
+        .action-btn.selected {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+            border-color: #60a5fa;
+            box-shadow: 0 0 20px rgba(96, 165, 250, 0.5);
+        }
+
+        .action-btn.correct {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-color: #10b981;
+        }
+
+        .action-btn.incorrect {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            border-color: #ef4444;
+        }
+
+        .sizing-input {
             width: 100%;
-            margin-top: 15px;
+            padding: 8px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 2px solid #475569;
+            color: #e2e8f0;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: bold;
+            display: none;
         }
 
-        .btn-execute:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+        /* FEEDBACK */
+        .feedback-box {
+            background: rgba(15, 23, 42, 0.9);
+            border-left: 4px solid #10b981;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 12px 0;
+            font-size: 12px;
+            line-height: 1.6;
         }
 
-        /* Stats Grid */
+        .feedback-box.error {
+            border-left-color: #ef4444;
+        }
+
+        .feedback-title {
+            font-weight: bold;
+            color: #34d399;
+            margin-bottom: 6px;
+        }
+
+        .feedback-box.error .feedback-title {
+            color: #f87171;
+        }
+
+        /* STATS */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            grid-template-columns: 1fr 1fr;
             gap: 10px;
-            margin-bottom: 20px;
+            margin: 12px 0;
         }
 
-        .stat-card {
-            background: white;
-            padding: 12px;
-            border-radius: 10px;
+        .stat-box {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 10px;
             text-align: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
 
         .stat-label {
             font-size: 10px;
-            color: #6b7280;
+            color: #94a3b8;
             text-transform: uppercase;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
         }
 
         .stat-value {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--dark);
+            font-size: 16px;
+            font-weight: bold;
+            color: #60a5fa;
         }
 
-        /* Main Grid */
-        .main-grid {
+        /* RANGE DISPLAY */
+        .range-display {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 11px;
+        }
+
+        .range-title {
+            color: #60a5fa;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .range-hands {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .hand-tag {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+            color: #fff;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: bold;
+        }
+
+        .hand-tag.premium {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .hand-tag.strong {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .hand-tag.medium {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+        }
+
+        /* EXPLANATION */
+        .explanation {
+            background: rgba(15, 23, 42, 0.9);
+            border-left: 4px solid #60a5fa;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 12px 0;
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
+        .explanation h4 {
+            color: #60a5fa;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .explanation ul {
+            margin-left: 15px;
+            margin-top: 6px;
+        }
+
+        .explanation li {
+            margin: 3px 0;
+            color: #cbd5e1;
+        }
+
+        .highlight {
+            color: #34d399;
+            font-weight: bold;
+        }
+
+        .phase-indicator {
+            display: inline-block;
+            padding: 5px 10px;
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 250px;
+            margin: 15px 0;
+        }
+
+        .details-box {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
+        .details-box strong {
+            color: #60a5fa;
+        }
+
+        .ev-calc {
             display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 20px;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin: 8px 0;
+            font-size: 10px;
+        }
+
+        .ev-item {
+            background: rgba(60, 80, 120, 0.3);
+            padding: 6px;
+            border-radius: 4px;
+            border-left: 2px solid #60a5fa;
         }
 
         @media (max-width: 1200px) {
-            .main-grid {
+            .container {
                 grid-template-columns: 1fr;
             }
-        }
-
-        /* Alert System */
-        .alert {
-            padding: 12px 20px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            animation: slideIn 0.3s;
-        }
-
-        @keyframes slideIn {
-            from { transform: translateX(-100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        .alert-success {
-            background: #d1fae5;
-            border-left: 4px solid var(--success);
-        }
-
-        .alert-danger {
-            background: #fee2e2;
-            border-left: 4px solid var(--danger);
-        }
-
-        .alert-warning {
-            background: #fef3c7;
-            border-left: 4px solid var(--warning);
-        }
-
-        /* Loading */
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(0,0,0,0.1);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .updating-flash {
-            animation: flash 0.5s;
-        }
-
-        @keyframes flash {
-            0%, 100% { background: white; }
-            50% { background: #fef3c7; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Header avec Timer Live -->
-        <div class="main-header">
-            <div class="header-top">
-                <h1 style="font-size: 24px; font-weight: 700;">🚀 CoPilot Trading Pro - Analyse Temps Réel</h1>
-                <div class="live-timer">
-                    <div class="refresh-indicator"></div>
-                    <div>
-                        <div style="font-size: 11px; opacity: 0.8;">MISE À JOUR DANS</div>
-                        <div class="timer-seconds" id="refreshTimer">30s</div>
+        <!-- GAUCHE: TABLE -->
+        <div class="panel">
+            <div class="panel-title">🎮 POKER TABLE INTERACTIVE</div>
+            
+            <div class="poker-table">
+                <div class="pot-display" id="potDisplay">Pot: 0BB</div>
+                <div class="seats-container">
+                    <div class="seat" id="seat0">
+                        <div class="seat-label" id="label0">UTG</div>
+                        <div class="seat-stack" id="stack0">50BB</div>
+                        <div class="seat-action" id="action0"></div>
+                        <div class="seat-hand" id="hand0"></div>
                     </div>
-                    <div>
-                        <div style="font-size: 11px; opacity: 0.8;">HEURE EXACTE</div>
-                        <div style="font-size: 16px; font-weight: 600;" id="currentTime">--:--:--</div>
+                    <div class="seat" id="seat1">
+                        <div class="seat-label" id="label1">MP</div>
+                        <div class="seat-stack" id="stack1">50BB</div>
+                        <div class="seat-action" id="action1"></div>
+                        <div class="seat-hand" id="hand1"></div>
+                    </div>
+                    <div class="seat" id="seat2">
+                        <div class="seat-label" id="label2">CO</div>
+                        <div class="seat-stack" id="stack2">50BB</div>
+                        <div class="seat-action" id="action2"></div>
+                        <div class="seat-hand" id="hand2"></div>
+                    </div>
+                    <div class="seat" id="seat3">
+                        <div class="seat-label" id="label3">BTN</div>
+                        <div class="seat-stack" id="stack3">50BB</div>
+                        <div class="seat-action" id="action3"></div>
+                        <div class="seat-hand" id="hand3"></div>
+                    </div>
+                    <div class="seat" id="seat4">
+                        <div class="seat-label" id="label4">SB</div>
+                        <div class="seat-stack" id="stack4">50BB</div>
+                        <div class="seat-action" id="action4"></div>
+                        <div class="seat-hand" id="hand4"></div>
+                    </div>
+                    <div class="seat" id="seat5">
+                        <div class="seat-label" id="label5">BB</div>
+                        <div class="seat-stack" id="stack5">50BB</div>
+                        <div class="seat-action" id="action5"></div>
+                        <div class="seat-hand" id="hand5"></div>
                     </div>
                 </div>
+                <div class="board-cards" id="boardCards"></div>
             </div>
 
-            <!-- Stats Rapides -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">Capital Initial</div>
-                    <div class="stat-value">€500</div>
+            <div class="controls">
+                <div class="control-group">
+                    <label>Hero Position</label>
+                    <select id="heroPos" onchange="changeHeroPos()">
+                        <option value="0">UTG</option>
+                        <option value="1">MP (21%)</option>
+                        <option value="2">CO (28%)</option>
+                        <option value="3" selected>BTN (42%)</option>
+                        <option value="4">SB (42%)</option>
+                        <option value="5">BB (Defend)</option>
+                    </select>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-label">Valeur Actuelle</div>
-                    <div class="stat-value" id="totalValue">€500.00</div>
+
+                <div class="control-group">
+                    <label>Stack Depth (BB)</label>
+                    <input type="number" id="stackDepth" value="50" min="20" max="300" onchange="gameState.stackSize = parseInt(this.value)">
                 </div>
-                <div class="stat-card">
-                    <div class="stat-label">P&L Total</div>
-                    <div class="stat-value" id="totalPL">€0.00</div>
+
+                <div class="control-group">
+                    <label>Range Type</label>
+                    <select id="rangeType" onchange="generateNewHand()">
+                        <option value="standard" selected>GTO Standard</option>
+                        <option value="fishy">vs Fishy Opponent</option>
+                    </select>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-label">P&L Jour</div>
-                    <div class="stat-value" id="dailyPL">€0.00</div>
+
+                <div class="btn-group">
+                    <button class="btn-primary" onclick="generateNewHand()">🔄 New Hand</button>
+                    <button onclick="nextAfterDecision()">⚡ Skip</button>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-label">Cash Dispo</div>
-                    <div class="stat-value" id="availableCash">€500.00</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Frais eToro</div>
-                    <div class="stat-value" id="totalFees">€0.00</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Positions</div>
-                    <div class="stat-value" id="openPositions">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Perf %</div>
-                    <div class="stat-value" id="performance">0.00%</div>
+
+                <div class="action-history" id="actionHistory">
+                    <strong style="color: #60a5fa;">Action History:</strong>
                 </div>
             </div>
         </div>
 
-        <!-- Position Manager eToro -->
-        <div class="position-manager">
-            <h2 style="margin-bottom: 15px; font-size: 18px; font-weight: 700;">💼 Gestionnaire de Position eToro</h2>
-            <div class="position-input">
-                <div class="input-group">
-                    <label class="input-label">Crypto/Action</label>
-                    <input type="text" class="input-field" id="inputSymbol" placeholder="Ex: BTC, ETH, AAPL">
+        <!-- CENTRE: GAME STATE & DECISION -->
+        <div class="panel">
+            <div class="panel-title">🎯 YOUR DECISION</div>
+
+            <div id="gameInfo">
+                <div style="margin: 10px 0;">
+                    <span class="phase-indicator" id="phaseIndicator">PRÉFLOP</span>
+                    <span style="margin-left: 10px; font-size: 11px; color: #94a3b8;">
+                        Hand #<span id="handNumber">1</span>
+                    </span>
                 </div>
-                <div class="input-group">
-                    <label class="input-label">Prix d'Achat (€/$)</label>
-                    <input type="number" class="input-field" id="inputBuyPrice" placeholder="Ex: 45000" step="0.01">
-                </div>
-                <div class="input-group">
-                    <label class="input-label">Quantité</label>
-                    <input type="number" class="input-field" id="inputQuantity" placeholder="Ex: 0.01" step="0.0001">
-                </div>
-                <div class="input-group">
-                    <label class="input-label">Investissement (€)</label>
-                    <input type="number" class="input-field" id="inputInvestment" placeholder="Ex: 100" step="0.01">
+
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-label">Your Hand</div>
+                        <div class="stat-value" id="yourHand">--</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Pot Odds</div>
+                        <div class="stat-value" id="potOdds">--</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Outs</div>
+                        <div class="stat-value" id="outsDisplay">--</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Equity</div>
+                        <div class="stat-value" id="equityDisplay">--</div>
+                    </div>
                 </div>
             </div>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
-                <button class="btn btn-execute" onclick="addPosition()">➕ Ajouter Position</button>
-                <button class="btn" style="background: var(--primary); color: white;" onclick="analyzePosition()">🔍 Analyser Position</button>
-                <button class="btn" style="background: var(--danger); color: white;" onclick="clearPositions()">🗑️ Reset Portfolio</button>
+
+            <div class="decision-panel" id="decisionPanel">
+                <div class="decision-title" id="decisionTitle">Your Action</div>
+                <div class="action-buttons" id="actionButtons">
+                    <!-- Buttons générés dynamiquement -->
+                </div>
+                <input type="text" class="sizing-input" id="sizingInput" placeholder="Amount (e.g., 2.5x, 50BB)">
+                <button class="btn-primary" style="width: 100%; margin-top: 10px;" onclick="confirmAction()" id="confirmBtn">Confirm Action</button>
+            </div>
+
+            <div id="feedbackArea"></div>
+
+            <div class="range-display">
+                <div class="range-title">📍 Your Range Here</div>
+                <div class="range-hands" id="yourRange">
+                    <!-- Généré dynamiquement -->
+                </div>
+            </div>
+
+            <div class="range-display">
+                <div class="range-title">🎯 Opponent Range</div>
+                <div class="range-hands" id="oppRange">
+                    <!-- Généré dynamiquement -->
+                </div>
             </div>
         </div>
 
-        <!-- Alertes -->
-        <div id="alertsContainer"></div>
+        <!-- DROITE: ANALYSIS & STATS -->
+        <div class="panel">
+            <div class="panel-title">📊 GTO ANALYSIS</div>
 
-        <!-- Main Grid -->
-        <div class="main-grid">
-            <!-- Colonne Gauche: Analyse Live -->
-            <div>
-                <!-- Prix en Temps Réel -->
-                <div class="live-analysis">
-                    <div class="analysis-header">
-                        <h2 class="analysis-title">📊 Prix en Temps Réel (Mise à jour chaque seconde)</h2>
-                        <div class="analysis-timestamp" id="lastUpdate">--:--:--</div>
-                    </div>
-                    <div class="prices-grid" id="livePrices">
-                        <!-- Prix générés dynamiquement -->
-                    </div>
-                </div>
+            <div class="chart-container">
+                <canvas id="equityChart"></canvas>
+            </div>
 
-                <!-- Actions Recommandées -->
-                <div class="live-analysis" style="margin-top: 20px;">
-                    <div class="analysis-header">
-                        <h2 class="analysis-title">🎯 Actions à Prendre MAINTENANT</h2>
-                    </div>
-                    <div id="actionsContainer">
-                        <!-- Actions générées dynamiquement -->
-                    </div>
-                </div>
-
-                <!-- Analyse Détaillée -->
-                <div class="live-analysis" style="margin-top: 20px;">
-                    <div class="analysis-header">
-                        <h2 class="analysis-title">🤖 Analyse IA Détaillée</h2>
-                    </div>
-                    <div id="detailedAnalysis" style="line-height: 1.8; color: #4b5563;">
-                        Analyse en cours...
-                    </div>
+            <div class="details-box">
+                <strong>EV Calculation:</strong>
+                <div class="ev-calc" id="evCalc">
+                    <!-- Généré dynamiquement -->
                 </div>
             </div>
 
-            <!-- Colonne Droite: Portfolio et Ordres -->
-            <div>
-                <!-- Mes Positions -->
-                <div class="live-analysis">
-                    <div class="analysis-header">
-                        <h2 class="analysis-title">💰 Mes Positions Actives</h2>
-                    </div>
-                    <div id="myPositions">
-                        <p style="text-align: center; padding: 30px; color: #9ca3af;">
-                            Aucune position active<br>
-                            <span style="font-size: 12px;">Ajoutez vos positions eToro ci-dessus</span>
-                        </p>
-                    </div>
-                </div>
+            <div class="explanation" id="strategyExplanation">
+                <h4>GTO Strategy</h4>
+                <p>Start a new hand to see the strategy analysis...</p>
+            </div>
 
-                <!-- Calculateur P&L avec Frais eToro -->
-                <div class="live-analysis" style="margin-top: 20px;">
-                    <div class="analysis-header">
-                        <h2 class="analysis-title">💸 Calculateur P&L (Frais eToro inclus)</h2>
-                    </div>
-                    <div id="plCalculator">
-                        <p style="text-align: center; padding: 20px; color: #9ca3af;">
-                            Ajoutez une position pour voir le calcul
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Ordres Suggérés -->
-                <div class="live-analysis" style="margin-top: 20px;">
-                    <div class="analysis-header">
-                        <h2 class="analysis-title">📝 Ordres à Exécuter</h2>
-                    </div>
-                    <div id="suggestedOrders">
-                        <p style="text-align: center; padding: 20px; color: #9ca3af;">
-                            Analyse des opportunités...
-                        </p>
-                    </div>
+            <div class="details-box">
+                <strong>Range Analysis:</strong>
+                <div id="rangeAnalysis" style="margin-top: 6px;">
+                    <!-- Généré dynamiquement -->
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Configuration
-        const CONFIG = {
-            INITIAL_CAPITAL: 500,
-            UPDATE_INTERVAL: 1000, // Mise à jour chaque seconde
-            REFRESH_INTERVAL: 30000, // Refresh complet toutes les 30 secondes
-            ETORO_FEES: {
-                crypto: {
-                    spread: 0.0075, // 0.75% spread moyen crypto
-                    overnight: 0.00003, // Frais overnight crypto
-                    weekend: 0.00006 // Frais weekend crypto
-                },
-                stocks: {
-                    spread: 0.0009, // 0.09% spread actions
-                    overnight: 0, // Pas de frais overnight sur actions
-                    conversion: 0.005 // 0.5% conversion devise
-                },
-                withdrawal: 5 // 5$ frais de retrait
-            }
+        // ===== ALL POKER HANDS =====
+        const ALL_HANDS = [
+            'AA', 'KK', 'QQ', 'JJ', 'TT', '99', '88', '77', '66', '55', '44', '33', '22',
+            'AKs', 'AQs', 'AJs', 'ATs', 'A9s', 'A8s', 'A7s', 'A6s', 'A5s', 'A4s', 'A3s', 'A2s',
+            'KQs', 'KJs', 'KTs', 'K9s', 'K8s', 'K7s', 'K6s', 'K5s', 'K4s', 'K3s', 'K2s',
+            'QJs', 'QTs', 'Q9s', 'Q8s', 'Q7s', 'Q6s', 'Q5s', 'Q4s', 'Q3s', 'Q2s',
+            'JTs', 'J9s', 'J8s', 'J7s', 'J6s', 'J5s', 'J4s', 'J3s', 'J2s',
+            'T9s', 'T8s', 'T7s', 'T6s', 'T5s', 'T4s', 'T3s', 'T2s',
+            '98s', '97s', '96s', '95s', '94s', '93s', '92s',
+            '87s', '86s', '85s', '84s', '83s', '82s',
+            '76s', '75s', '74s', '73s', '72s',
+            '65s', '64s', '63s', '62s',
+            '54s', '53s', '52s',
+            '43s', '42s',
+            '32s',
+            'AKo', 'AQo', 'AJo', 'ATo', 'A9o', 'A8o', 'A7o', 'A6o', 'A5o', 'A4o', 'A3o', 'A2o',
+            'KQo', 'KJo', 'KTo', 'K9o', 'K8o', 'K7o', 'K6o', 'K5o', 'K4o', 'K3o', 'K2o',
+            'QJo', 'QTo', 'Q9o', 'Q8o', 'Q7o', 'Q6o', 'Q5o', 'Q4o', 'Q3o', 'Q2o',
+            'JTo', 'J9o', 'J8o', 'J7o', 'J6o', 'J5o', 'J4o', 'J3o', 'J2o',
+            'T9o', 'T8o', 'T7o', 'T6o', 'T5o', 'T4o', 'T3o', 'T2o',
+            '98o', '97o', '96o', '95o', '94o', '93o', '92o',
+            '87o', '86o', '85o', '84o', '83o', '82o',
+            '76o', '75o', '74o', '73o', '72o',
+            '65o', '64o', '63o', '62o',
+            '54o', '53o', '52o',
+            '43o', '42o',
+            '32o'
+        ];
+
+        // ===== GTO RANGES =====
+        const POSITION_RANGES = {
+            0: { pos: 'UTG', standard: 0.12, fishy: 0.18 },
+            1: { pos: 'MP', standard: 0.21, fishy: 0.35 },
+            2: { pos: 'CO', standard: 0.28, fishy: 0.42 },
+            3: { pos: 'BTN', standard: 0.42, fishy: 0.55 },
+            4: { pos: 'SB', standard: 0.42, fishy: 0.60 },
+            5: { pos: 'BB', standard: 1, fishy: 1 }
         };
 
-        // État Global
-        let state = {
-            positions: JSON.parse(localStorage.getItem('positions')) || [],
-            marketData: {},
-            lastPrices: {},
-            refreshCountdown: 30,
-            secondsElapsed: 0,
-            alerts: [],
-            predictions: {}
+        const PREMIUM_HANDS = ['AA', 'KK', 'QQ', 'AKs', 'AKo'];
+        const STRONG_HANDS = ['JJ', 'TT', 'AQs', 'AQo', 'KQs', 'KQo', 'AJs', 'AJo'];
+        const MEDIUM_HANDS = ['99', '88', 'ATs', 'KJs', 'QJs', 'JTs', 'A9s', 'KTs'];
+
+        // ===== GAME STATE =====
+        const gameState = {
+            handNumber: 1,
+            heroPos: 3,
+            stackSize: 50,
+            rangeType: 'standard',
+            phase: 'preflop',
+            heroHand: null,
+            boardCards: [],
+            actionLog: [],
+            players: [
+                { pos: 'UTG', stack: 50, hand: null, action: null, amount: 0 },
+                { pos: 'MP', stack: 50, hand: null, action: null, amount: 0 },
+                { pos: 'CO', stack: 50, hand: null, action: null, amount: 0 },
+                { pos: 'BTN', stack: 50, hand: null, action: null, amount: 0 },
+                { pos: 'SB', stack: 50, hand: null, action: null, amount: 0 },
+                { pos: 'BB', stack: 50, hand: null, action: null, amount: 0 }
+            ],
+            pot: 1.5,
+            currentToAct: 0,
+            userMadeDecision: false,
+            correctAction: null,
+            correctSizing: null,
+            userSelectedAction: null
         };
 
-        // Cache des prix
-        let priceCache = new Map();
-        let lastFetch = 0;
-
-        // Récupérer les prix en temps réel
-        async function fetchRealTimePrices() {
-            try {
-                // Limite à 1 appel par seconde
-                const now = Date.now();
-                if (now - lastFetch < 1000) {
-                    return state.marketData;
-                }
-                lastFetch = now;
-
-                // Crypto prices from CoinGecko
-                const cryptoResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,binancecoin,ripple,cardano,solana,polkadot,dogecoin,shiba-inu,polygon&vs_currencies=eur&include_24hr_change=true&include_24hr_vol=true');
-                const cryptoData = await cryptoResponse.json();
-
-                // Convertir en format utilisable
-                const formattedData = {
-                    BTC: { price: cryptoData.bitcoin?.eur || 0, change: cryptoData.bitcoin?.eur_24h_change || 0 },
-                    ETH: { price: cryptoData.ethereum?.eur || 0, change: cryptoData.ethereum?.eur_24h_change || 0 },
-                    BNB: { price: cryptoData.binancecoin?.eur || 0, change: cryptoData.binancecoin?.eur_24h_change || 0 },
-                    XRP: { price: cryptoData.ripple?.eur || 0, change: cryptoData.ripple?.eur_24h_change || 0 },
-                    ADA: { price: cryptoData.cardano?.eur || 0, change: cryptoData.cardano?.eur_24h_change || 0 },
-                    SOL: { price: cryptoData.solana?.eur || 0, change: cryptoData.solana?.eur_24h_change || 0 },
-                    DOT: { price: cryptoData.polkadot?.eur || 0, change: cryptoData.polkadot?.eur_24h_change || 0 },
-                    DOGE: { price: cryptoData.dogecoin?.eur || 0, change: cryptoData.dogecoin?.eur_24h_change || 0 },
-                    SHIB: { price: cryptoData['shiba-inu']?.eur || 0, change: cryptoData['shiba-inu']?.eur_24h_change || 0 },
-                    MATIC: { price: cryptoData.polygon?.eur || 0, change: cryptoData.polygon?.eur_24h_change || 0 }
-                };
-
-                state.marketData = formattedData;
-                return formattedData;
-            } catch (error) {
-                console.error('Erreur fetch prices:', error);
-                return state.marketData;
-            }
+        // ===== RANGE GENERATION =====
+        function generateRange(percentage) {
+            const count = Math.ceil(169 * percentage);
+            const topHands = [
+                ...PREMIUM_HANDS,
+                ...STRONG_HANDS,
+                ...MEDIUM_HANDS,
+                'A8s', 'A7s', 'A6s', 'A5s', 'A4s', 'A3s', 'A2s',
+                'K9s', 'K8s', 'K7s', 'K6s', 'K5s', 'K4s', 'K3s', 'K2s',
+                'Q9s', 'Q8s', 'Q7s', 'Q6s', 'Q5s', 'Q4s', 'Q3s', 'Q2s',
+                'J9s', 'J8s', 'J7s', 'J6s', 'J5s', 'J4s', 'J3s', 'J2s',
+                'T9s', 'T8s', 'T7s', 'T6s', 'T5s', 'T4s', 'T3s', 'T2s',
+                '98s', '97s', '96s', '95s', '94s', '93s', '92s',
+                '87s', '86s', '85s', '84s', '83s', '82s',
+                '76s', '75s', '74s', '73s', '72s',
+                '65s', '64s', '63s', '62s',
+                '54s', '53s', '52s',
+                '43s', '42s',
+                '32s',
+                'A9o', 'A8o', 'A7o', 'A6o', 'A5o', 'A4o', 'A3o', 'A2o',
+                'K9o', 'K8o', 'K7o', 'K6o', 'K5o', 'K4o', 'K3o', 'K2o',
+                'Q9o', 'Q8o', 'Q7o', 'Q6o', 'Q5o', 'Q4o', 'Q3o', 'Q2o',
+                'J9o', 'J8o', 'J7o', 'J6o', 'J5o', 'J4o', 'J3o', 'J2o',
+                'T9o', 'T8o', 'T7o', 'T6o', 'T5o', 'T4o', 'T3o', 'T2o',
+                '98o', '97o', '96o', '95o', '94o', '93o', '92o',
+                '87o', '86o', '85o', '84o', '83o', '82o',
+                '76o', '75o', '74o', '73o', '72o',
+                '65o', '64o', '63o', '62o',
+                '54o', '53o', '52o',
+                '43o', '42o',
+                '32o'
+            ];
+            return topHands.slice(0, Math.min(count, topHands.length));
         }
 
-        // Analyser une position
-        function analyzePositionData(position, currentPrice) {
-            const quantity = parseFloat(position.quantity);
-            const buyPrice = parseFloat(position.buyPrice);
-            const investment = parseFloat(position.investment);
-            
-            // Calcul du P&L brut
-            const currentValue = quantity * currentPrice;
-            const grossPL = currentValue - investment;
-            const grossPLPercent = (grossPL / investment) * 100;
-            
-            // Calcul des frais eToro
-            const isStock = !['BTC', 'ETH', 'BNB', 'XRP', 'ADA', 'SOL', 'DOT', 'DOGE', 'SHIB', 'MATIC'].includes(position.symbol);
-            const fees = isStock ? CONFIG.ETORO_FEES.stocks : CONFIG.ETORO_FEES.crypto;
-            
-            // Frais d'entrée (spread)
-            const entryFee = investment * fees.spread;
-            
-            // Frais de sortie (spread)
-            const exitFee = currentValue * fees.spread;
-            
-            // Frais overnight (si position > 1 jour)
-            const daysHeld = Math.floor((Date.now() - (position.timestamp || Date.now())) / (1000 * 60 * 60 * 24));
-            const overnightFee = isStock ? 0 : (investment * fees.overnight * daysHeld);
-            
-            // Total des frais
-            const totalFees = entryFee + exitFee + overnightFee;
-            
-            // P&L net
-            const netPL = grossPL - totalFees;
-            const netPLPercent = (netPL / investment) * 100;
-            
-            // Recommandation
-            let recommendation = 'HOLD';
-            let confidence = 50;
-            let reasoning = [];
-            
-            // Analyse technique simple
-            const priceChange = ((currentPrice - buyPrice) / buyPrice) * 100;
-            
-            if (priceChange > 15) {
-                recommendation = 'SELL';
-                confidence = 85;
-                reasoning.push('Profit de +15% atteint, prendre les bénéfices');
-            } else if (priceChange > 10) {
-                recommendation = 'PARTIAL_SELL';
-                confidence = 75;
-                reasoning.push('Profit de +10%, vendre 50% pour sécuriser');
-            } else if (priceChange < -10) {
-                recommendation = 'SELL';
-                confidence = 80;
-                reasoning.push('Perte de -10%, couper les pertes (stop loss)');
-            } else if (priceChange > 5 && state.marketData[position.symbol]?.change < -2) {
-                recommendation = 'SELL';
-                confidence = 70;
-                reasoning.push('Profit de +5% avec momentum négatif, sécuriser');
-            } else if (priceChange < -5 && state.marketData[position.symbol]?.change > 3) {
-                recommendation = 'BUY_MORE';
-                confidence = 65;
-                reasoning.push('En perte mais momentum positif, moyenner à la baisse');
-            }
-            
-            return {
-                currentPrice,
-                currentValue,
-                grossPL,
-                grossPLPercent,
-                entryFee,
-                exitFee,
-                overnightFee,
-                totalFees,
-                netPL,
-                netPLPercent,
-                recommendation,
-                confidence,
-                reasoning,
-                priceChange
-            };
+        function getHandCategory(hand) {
+            if (PREMIUM_HANDS.includes(hand)) return 'premium';
+            if (STRONG_HANDS.includes(hand)) return 'strong';
+            if (MEDIUM_HANDS.includes(hand)) return 'medium';
+            return 'weak';
         }
 
-        // Ajouter une position
-        function addPosition() {
-            const symbol = document.getElementById('inputSymbol').value.toUpperCase();
-            const buyPrice = parseFloat(document.getElementById('inputBuyPrice').value);
-            const quantity = parseFloat(document.getElementById('inputQuantity').value);
-            const investment = parseFloat(document.getElementById('inputInvestment').value);
-            
-            if (!symbol || !buyPrice || (!quantity && !investment)) {
-                showAlert('danger', 'Erreur', 'Remplissez au moins Symbol, Prix et (Quantité ou Investissement)');
-                return;
-            }
-            
-            // Calculer la quantité si non fournie
-            const finalQuantity = quantity || (investment / buyPrice);
-            const finalInvestment = investment || (quantity * buyPrice);
-            
-            const position = {
-                id: Date.now(),
-                symbol,
-                buyPrice,
-                quantity: finalQuantity,
-                investment: finalInvestment,
-                timestamp: Date.now()
-            };
-            
-            state.positions.push(position);
-            localStorage.setItem('positions', JSON.stringify(state.positions));
-            
-            // Clear inputs
-            document.getElementById('inputSymbol').value = '';
-            document.getElementById('inputBuyPrice').value = '';
-            document.getElementById('inputQuantity').value = '';
-            document.getElementById('inputInvestment').value = '';
-            
-            showAlert('success', 'Position ajoutée', `${symbol} @ €${buyPrice}`);
-            updatePositions();
-            analyzeAllPositions();
-        }
+        // ===== GAME GENERATION =====
+        function generateNewHand() {
+            gameState.handNumber++;
+            gameState.phase = 'preflop';
+            gameState.actionLog = [];
+            gameState.boardCards = [];
+            gameState.userMadeDecision = false;
+            gameState.correctAction = null;
+            gameState.correctSizing = null;
+            gameState.userSelectedAction = null;
+            gameState.rangeType = document.getElementById('rangeType').value;
+            gameState.heroPos = parseInt(document.getElementById('heroPos').value);
+            gameState.stackSize = parseInt(document.getElementById('stackDepth').value);
 
-        // Analyser toutes les positions
-        async function analyzeAllPositions() {
-            const prices = await fetchRealTimePrices();
-            const actions = [];
-            
-            for (let position of state.positions) {
-                const currentPrice = prices[position.symbol]?.price || position.buyPrice;
-                const analysis = analyzePositionData(position, currentPrice);
-                
-                if (analysis.recommendation !== 'HOLD') {
-                    actions.push({
-                        position,
-                        analysis,
-                        priority: analysis.confidence
-                    });
-                }
-            }
-            
-            // Trier par priorité
-            actions.sort((a, b) => b.priority - a.priority);
-            
-            // Afficher les actions
-            displayActions(actions);
-            
-            // Analyser les opportunités d'achat
-            analyzeOpportunities(prices);
-        }
-
-        // Analyser les opportunités
-        function analyzeOpportunities(prices) {
-            const opportunities = [];
-            const availableCash = 500 - state.positions.reduce((sum, p) => sum + p.investment, 0);
-            
-            for (let [symbol, data] of Object.entries(prices)) {
-                // Skip si on a déjà une position
-                if (state.positions.find(p => p.symbol === symbol)) continue;
-                
-                let score = 50;
-                let reasons = [];
-                
-                // Analyse du momentum
-                if (data.change > 5) {
-                    score += 20;
-                    reasons.push(`Momentum fort +${data.change.toFixed(2)}%`);
-                } else if (data.change < -5) {
-                    score += 15;
-                    reasons.push(`Survente potentielle ${data.change.toFixed(2)}%`);
-                }
-                
-                // Analyse par rapport à l'historique
-                const lastPrice = state.lastPrices[symbol];
-                if (lastPrice) {
-                    const shortTermChange = ((data.price - lastPrice) / lastPrice) * 100;
-                    if (shortTermChange > 0.5) {
-                        score += 10;
-                        reasons.push('Tendance court terme positive');
-                    }
-                }
-                
-                if (score > 65) {
-                    opportunities.push({
-                        symbol,
-                        price: data.price,
-                        change: data.change,
-                        score,
-                        reasons,
-                        allocation: Math.min(availableCash * 0.3, 100) // Max 30% ou 100€
-                    });
-                }
-            }
-            
-            // Afficher les opportunités
-            displayOpportunities(opportunities);
-            
-            // Sauvegarder les prix pour comparaison
-            state.lastPrices = {...prices};
-        }
-
-        // Afficher les prix en temps réel
-        function displayLivePrices(prices) {
-            const container = document.getElementById('livePrices');
-            
-            const html = Object.entries(prices).map(([symbol, data]) => {
-                const position = state.positions.find(p => p.symbol === symbol);
-                const signal = position ? 'position' : data.change > 3 ? 'buy-signal' : data.change < -3 ? 'sell-signal' : '';
-                
-                return `
-                    <div class="price-card ${signal} updating-flash">
-                        <div class="price-symbol">${symbol}</div>
-                        <div class="price-value">€${data.price.toFixed(data.price > 100 ? 2 : 4)}</div>
-                        <div class="price-change ${data.change >= 0 ? 'positive' : 'negative'}">
-                            ${data.change >= 0 ? '+' : ''}${data.change.toFixed(2)}%
-                        </div>
-                        ${position ? '<div style="font-size: 10px; color: #6366f1; margin-top: 5px;">📍 Position active</div>' : ''}
-                    </div>
-                `;
-            }).join('');
-            
-            container.innerHTML = html;
-        }
-
-        // Afficher les actions
-        function displayActions(actions) {
-            const container = document.getElementById('actionsContainer');
-            
-            if (actions.length === 0) {
-                container.innerHTML = '<p style="text-align: center; padding: 20px; color: #9ca3af;">Aucune action urgente. Continuez à HOLD.</p>';
-                return;
-            }
-            
-            const html = actions.map(action => {
-                const urgent = action.analysis.recommendation === 'SELL' && action.analysis.priceChange < -8;
-                
-                return `
-                    <div class="action-card ${urgent ? 'action-urgent' : ''}">
-                        <div class="action-header">
-                            <div>
-                                <strong style="font-size: 16px;">${action.position.symbol}</strong>
-                                <span style="margin-left: 10px; color: #6b7280;">
-                                    Acheté à €${action.position.buyPrice} → Actuel €${action.analysis.currentPrice.toFixed(2)}
-                                </span>
-                            </div>
-                            <div class="action-type action-${action.analysis.recommendation === 'SELL' ? 'sell' : action.analysis.recommendation === 'BUY_MORE' ? 'buy' : 'hold'}">
-                                ${action.analysis.recommendation}
-                            </div>
-                        </div>
-                        
-                        <div class="pl-calculator">
-                            <div class="pl-row">
-                                <span>Valeur actuelle:</span>
-                                <span>€${action.analysis.currentValue.toFixed(2)}</span>
-                            </div>
-                            <div class="pl-row">
-                                <span>P&L Brut:</span>
-                                <span class="${action.analysis.grossPL >= 0 ? 'positive' : 'negative'}">
-                                    ${action.analysis.grossPL >= 0 ? '+' : ''}€${action.analysis.grossPL.toFixed(2)} 
-                                    (${action.analysis.grossPLPercent.toFixed(2)}%)
-                                </span>
-                            </div>
-                            <div class="pl-row">
-                                <span>Frais eToro Total:</span>
-                                <span style="color: var(--danger);">-€${action.analysis.totalFees.toFixed(2)}</span>
-                            </div>
-                            <div class="pl-row">
-                                <span><strong>P&L Net:</strong></span>
-                                <span class="${action.analysis.netPL >= 0 ? 'positive' : 'negative'}">
-                                    <strong>
-                                        ${action.analysis.netPL >= 0 ? '+' : ''}€${action.analysis.netPL.toFixed(2)}
-                                        (${action.analysis.netPLPercent.toFixed(2)}%)
-                                    </strong>
-                                </span>
-                            </div>
-                        </div>
-                        
-                        <div style="margin-top: 15px; padding: 10px; background: #f9fafb; border-radius: 8px;">
-                            <strong>Analyse (Confiance: ${action.analysis.confidence}%)</strong><br>
-                            ${action.analysis.reasoning.map(r => `• ${r}`).join('<br>')}
-                        </div>
-                        
-                        ${action.analysis.recommendation === 'SELL' ? `
-                            <button class="btn btn-execute" style="background: var(--danger);" 
-                                onclick="executeAction('SELL', '${action.position.symbol}', ${action.analysis.currentPrice})">
-                                🔴 VENDRE MAINTENANT (Net: €${action.analysis.netPL.toFixed(2)})
-                            </button>
-                        ` : action.analysis.recommendation === 'BUY_MORE' ? `
-                            <button class="btn btn-execute" 
-                                onclick="executeAction('BUY', '${action.position.symbol}', ${action.analysis.currentPrice})">
-                                🟢 ACHETER PLUS (Moyenner)
-                            </button>
-                        ` : ''}
-                    </div>
-                `;
-            }).join('');
-            
-            container.innerHTML = html;
-        }
-
-        // Afficher les opportunités
-        function displayOpportunities(opportunities) {
-            const container = document.getElementById('suggestedOrders');
-            
-            if (opportunities.length === 0) {
-                container.innerHTML = '<p style="text-align: center; padding: 20px; color: #9ca3af;">Aucune opportunité forte détectée</p>';
-                return;
-            }
-            
-            const html = opportunities.slice(0, 3).map(opp => `
-                <div class="action-card">
-                    <div class="action-header">
-                        <div>
-                            <strong>${opp.symbol}</strong>
-                            <span style="margin-left: 10px; color: #6b7280;">€${opp.price.toFixed(2)}</span>
-                        </div>
-                        <div class="action-type action-buy">ACHETER</div>
-                    </div>
-                    <div style="margin: 15px 0;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                            <span>Score d'opportunité:</span>
-                            <span style="font-weight: 600;">${opp.score}/100</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                            <span>Changement 24h:</span>
-                            <span class="${opp.change >= 0 ? 'positive' : 'negative'}">
-                                ${opp.change >= 0 ? '+' : ''}${opp.change.toFixed(2)}%
-                            </span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between;">
-                            <span>Allocation suggérée:</span>
-                            <span style="font-weight: 600;">€${opp.allocation.toFixed(2)}</span>
-                        </div>
-                    </div>
-                    <div style="padding: 10px; background: #f9fafb; border-radius: 8px;">
-                        ${opp.reasons.map(r => `• ${r}`).join('<br>')}
-                    </div>
-                    <button class="btn btn-execute" onclick="buyOpportunity('${opp.symbol}', ${opp.price}, ${opp.allocation})">
-                        💰 Acheter ${opp.symbol} pour €${opp.allocation.toFixed(2)}
-                    </button>
-                </div>
-            `).join('');
-            
-            container.innerHTML = html;
-        }
-
-        // Afficher les positions
-        function updatePositions() {
-            const container = document.getElementById('myPositions');
-            
-            if (state.positions.length === 0) {
-                container.innerHTML = `
-                    <p style="text-align: center; padding: 30px; color: #9ca3af;">
-                        Aucune position active<br>
-                        <span style="font-size: 12px;">Ajoutez vos positions eToro ci-dessus</span>
-                    </p>
-                `;
-                return;
-            }
-            
-            const html = state.positions.map(position => {
-                const currentPrice = state.marketData[position.symbol]?.price || position.buyPrice;
-                const analysis = analyzePositionData(position, currentPrice);
-                
-                return `
-                    <div style="padding: 15px; background: #f9fafb; border-radius: 10px; margin-bottom: 10px;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                            <strong>${position.symbol}</strong>
-                            <span class="${analysis.netPL >= 0 ? 'positive' : 'negative'}">
-                                ${analysis.netPL >= 0 ? '+' : ''}€${analysis.netPL.toFixed(2)}
-                            </span>
-                        </div>
-                        <div style="font-size: 12px; color: #6b7280;">
-                            Qté: ${position.quantity.toFixed(4)} | Achat: €${position.buyPrice} | Actuel: €${currentPrice.toFixed(2)}
-                        </div>
-                        <button class="btn" style="background: var(--danger); color: white; width: 100%; margin-top: 10px; padding: 8px;"
-                            onclick="removePosition(${position.id})">
-                            Supprimer
-                        </button>
-                    </div>
-                `;
-            }).join('');
-            
-            container.innerHTML = html;
-            updateStats();
-        }
-
-        // Mettre à jour les stats
-        function updateStats() {
-            let totalValue = 500;
-            let totalPL = 0;
-            let totalFees = 0;
-            
-            state.positions.forEach(position => {
-                const currentPrice = state.marketData[position.symbol]?.price || position.buyPrice;
-                const analysis = analyzePositionData(position, currentPrice);
-                totalPL += analysis.netPL;
-                totalFees += analysis.totalFees;
+            // Reset all players
+            gameState.players.forEach((p, i) => {
+                p.hand = null;
+                p.action = null;
+                p.amount = 0;
+                p.stack = gameState.stackSize;
             });
+
+            // Generate hero hand
+            const heroRangePercent = POSITION_RANGES[gameState.heroPos][gameState.rangeType];
+            const heroRange = generateRange(heroRangePercent);
+            gameState.heroHand = heroRange[Math.floor(Math.random() * heroRange.length)];
+
+            // Reset pot
+            gameState.pot = 1.5;
+
+            // Generate random actions before hero
+            simulatePreflopAction();
+
+            // Display
+            updateUI();
+            document.getElementById('handNumber').textContent = gameState.handNumber;
+            document.getElementById('yourHand').textContent = gameState.heroHand;
             
-            totalValue = 500 + totalPL;
-            const performance = (totalPL / 500) * 100;
+            // Display ranges
+            displayRanges();
             
-            document.getElementById('totalValue').textContent = `€${totalValue.toFixed(2)}`;
-            document.getElementById('totalPL').textContent = `${totalPL >= 0 ? '+' : ''}€${totalPL.toFixed(2)}`;
-            document.getElementById('totalPL').className = `stat-value ${totalPL >= 0 ? 'positive' : 'negative'}`;
-            document.getElementById('totalFees').textContent = `€${totalFees.toFixed(2)}`;
-            document.getElementById('performance').textContent = `${performance >= 0 ? '+' : ''}${performance.toFixed(2)}%`;
-            document.getElementById('performance').className = `stat-value ${performance >= 0 ? 'positive' : 'negative'}`;
-            document.getElementById('openPositions').textContent = state.positions.length;
+            // Show decision panel
+            showDecisionPanel();
             
-            const investedAmount = state.positions.reduce((sum, p) => sum + p.investment, 0);
-            document.getElementById('availableCash').textContent = `€${(500 - investedAmount).toFixed(2)}`;
+            // Clear feedback
+            document.getElementById('feedbackArea').innerHTML = '';
         }
 
-        // Timer de refresh
-        function updateTimer() {
-            state.refreshCountdown--;
-            state.secondsElapsed++;
-            
-            if (state.refreshCountdown <= 0) {
-                state.refreshCountdown = 30;
-                fullRefresh();
+        function simulatePreflopAction() {
+            // Players act in order before hero
+            for (let i = 0; i < gameState.heroPos; i++) {
+                const percent = POSITION_RANGES[i][gameState.rangeType];
+                const range = generateRange(percent);
+                const hand = range[Math.floor(Math.random() * range.length)];
+                gameState.players[i].hand = hand;
+
+                // Random action: fold (55%), limp (30%), raise (15%)
+                const actionRoll = Math.random();
+                if (actionRoll < 0.55) {
+                    gameState.players[i].action = 'FOLD';
+                    gameState.actionLog.push(`${POSITION_RANGES[i].pos}: FOLD`);
+                } else if (actionRoll < 0.85) {
+                    gameState.players[i].action = 'LIMP';
+                    gameState.players[i].amount = 1;
+                    gameState.actionLog.push(`${POSITION_RANGES[i].pos}: LIMP 1BB`);
+                    gameState.pot += 1;
+                } else {
+                    gameState.players[i].action = 'RAISE';
+                    const sizing = 2.5;
+                    gameState.players[i].amount = sizing;
+                    gameState.actionLog.push(`${POSITION_RANGES[i].pos}: RAISE ${sizing}x`);
+                    gameState.pot += sizing;
+                }
             }
-            
-            document.getElementById('refreshTimer').textContent = `${state.refreshCountdown}s`;
-            document.getElementById('currentTime').textContent = new Date().toLocaleTimeString();
-            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+
+            // Determine correct action
+            determineCorrectAction();
         }
 
-        // Refresh complet
-        async function fullRefresh() {
-            const prices = await fetchRealTimePrices();
-            displayLivePrices(prices);
-            analyzeAllPositions();
-            updatePositions();
-            
-            // Analyse détaillée
-            const analysis = generateDetailedAnalysis(prices);
-            document.getElementById('detailedAnalysis').innerHTML = analysis;
+        function determineCorrectAction() {
+            const heroHand = gameState.heroHand;
+            const handStrength = getHandCategory(heroHand);
+
+            // Check if someone already raised
+            const previousRaise = gameState.players.slice(0, gameState.heroPos).find(p => p.action === 'RAISE');
+            const limpers = gameState.players.slice(0, gameState.heroPos).filter(p => p.action === 'LIMP');
+            const limpersCount = limpers.length;
+
+            if (previousRaise) {
+                // Someone raised
+                if (PREMIUM_HANDS.includes(heroHand)) {
+                    gameState.correctAction = 'RERAISE';
+                    gameState.correctSizing = '3x previous raise';
+                } else if (STRONG_HANDS.includes(heroHand) && gameState.stackSize > 30) {
+                    gameState.correctAction = 'CALL';
+                    gameState.correctSizing = String(previousRaise.amount);
+                } else if (handStrength === 'medium' && gameState.stackSize > 35) {
+                    gameState.correctAction = 'CALL';
+                    gameState.correctSizing = String(previousRaise.amount);
+                } else {
+                    gameState.correctAction = 'FOLD';
+                    gameState.correctSizing = 'N/A';
+                }
+            } else if (limpersCount >= 2) {
+                // Multiple limpers - isolation
+                if (PREMIUM_HANDS.includes(heroHand) || STRONG_HANDS.includes(heroHand)) {
+                    gameState.correctAction = 'RAISE';
+                    gameState.correctSizing = '2.5x BB (isolate)';
+                } else if (handStrength === 'medium' && gameState.heroPos >= 2) {
+                    gameState.correctAction = 'RAISE';
+                    gameState.correctSizing = '2.5x BB (isolate)';
+                } else {
+                    gameState.correctAction = 'LIMP';
+                    gameState.correctSizing = '1 BB';
+                }
+            } else if (limpersCount === 1) {
+                // One limper
+                if (PREMIUM_HANDS.includes(heroHand) || STRONG_HANDS.includes(heroHand)) {
+                    gameState.correctAction = 'RAISE';
+                    gameState.correctSizing = '2.5x BB (isolate)';
+                } else if (gameState.heroPos >= 2 && handStrength === 'medium') {
+                    gameState.correctAction = 'CALL';
+                    gameState.correctSizing = '1 BB';
+                } else {
+                    gameState.correctAction = 'FOLD';
+                    gameState.correctSizing = 'N/A';
+                }
+            } else {
+                // No one opened yet - open from position
+                if (PREMIUM_HANDS.includes(heroHand)) {
+                    gameState.correctAction = 'RAISE';
+                    gameState.correctSizing = '2.5x BB';
+                } else if (STRONG_HANDS.includes(heroHand)) {
+                    gameState.correctAction = 'RAISE';
+                    gameState.correctSizing = '2.5x BB';
+                } else if (handStrength === 'medium' && gameState.heroPos >= 2) {
+                    gameState.correctAction = 'RAISE';
+                    gameState.correctSizing = '2.5x BB';
+                } else if (gameState.heroPos >= 3 && Math.random() < 0.4) {
+                    gameState.correctAction = 'RAISE';
+                    gameState.correctSizing = '2.2x BB (steal)';
+                } else {
+                    gameState.correctAction = 'FOLD';
+                    gameState.correctSizing = 'N/A';
+                }
+            }
         }
 
-        // Générer analyse détaillée
-        function generateDetailedAnalysis(prices) {
-            const trending = Object.entries(prices)
-                .sort((a, b) => Math.abs(b[1].change) - Math.abs(a[1].change))
-                .slice(0, 3);
-            
-            const bullish = Object.entries(prices).filter(([_, data]) => data.change > 3);
-            const bearish = Object.entries(prices).filter(([_, data]) => data.change < -3);
-            
-            return `
-                <div style="margin-bottom: 15px;">
-                    <strong>📊 Tendance Générale:</strong> 
-                    ${bullish.length > bearish.length ? 
-                        '<span class="positive">Marché Haussier</span>' : 
-                        '<span class="negative">Marché Baissier</span>'}
+        // ===== DECISION PANEL =====
+        function showDecisionPanel() {
+            const panel = document.getElementById('decisionPanel');
+            const buttonsDiv = document.getElementById('actionButtons');
+            panel.style.display = 'block';
+
+            // Determine available actions
+            const previousRaise = gameState.players.slice(0, gameState.heroPos).find(p => p.action === 'RAISE');
+            let availableActions = ['FOLD'];
+
+            if (previousRaise) {
+                availableActions.push('CALL', 'RERAISE');
+            } else {
+                const limpers = gameState.players.slice(0, gameState.heroPos).filter(p => p.action === 'LIMP').length;
+                if (limpers > 0) {
+                    availableActions.push('LIMP', 'RAISE');
+                } else {
+                    availableActions.push('CHECK', 'RAISE');
+                }
+            }
+
+            buttonsDiv.innerHTML = availableActions.map(action => `
+                <button class="action-btn" onclick="selectAction('${action}')" data-action="${action}">
+                    <span>${getActionEmoji(action)}</span><br>${action}
+                </button>
+            `).join('');
+
+            // Show sizing input for RAISE/RERAISE
+            const sizingInput = document.getElementById('sizingInput');
+            sizingInput.value = '';
+        }
+
+        function getActionEmoji(action) {
+            const emojis = {
+                'FOLD': '🔴',
+                'CHECK': '⏸️',
+                'CALL': '☑️',
+                'RAISE': '⬆️',
+                'RERAISE': '⬆️⬆️',
+                'LIMP': '🚶'
+            };
+            return emojis[action] || '❓';
+        }
+
+        function selectAction(action) {
+            document.querySelectorAll('.action-btn').forEach(btn => btn.classList.remove('selected'));
+            event.target.closest('.action-btn').classList.add('selected');
+            gameState.userSelectedAction = action;
+
+            const sizingInput = document.getElementById('sizingInput');
+            if (action === 'RAISE' || action === 'RERAISE') {
+                sizingInput.style.display = 'block';
+                sizingInput.focus();
+            } else {
+                sizingInput.style.display = 'none';
+            }
+        }
+
+        function confirmAction() {
+            if (!gameState.userSelectedAction) {
+                alert('Select an action first!');
+                return;
+            }
+
+            gameState.userMadeDecision = true;
+            const userAction = gameState.userSelectedAction;
+            const userSizing = document.getElementById('sizingInput').value;
+
+            // Evaluate decision
+            evaluateUserDecision(userAction, userSizing);
+        }
+
+        function evaluateUserDecision(userAction, userSizing) {
+            const feedbackArea = document.getElementById('feedbackArea');
+            const isCorrect = userAction === gameState.correctAction;
+
+            let feedbackClass = isCorrect ? 'feedback-box' : 'feedback-box error';
+            let feedbackTitle = isCorrect ? '✅ CORRECT!' : '❌ INCORRECT!';
+            let feedbackContent = '';
+
+            if (isCorrect) {
+                feedbackContent = `
+                    <p>You correctly played <strong>${userAction}</strong>.</p>
+                    <p style="margin-top: 8px;"><strong>Why:</strong> ${getExplanation(userAction)}</p>
+                    <p style="margin-top: 8px; color: #34d399;"><strong>EV:</strong> +0.15 BB per hand</p>
+                `;
+            } else {
+                feedbackContent = `
+                    <p>You played <strong>${userAction}</strong>, but the correct action was <strong>${gameState.correctAction}</strong>.</p>
+                    <p style="margin-top: 8px;"><strong>Correct play:</strong> ${getExplanation(gameState.correctAction)}</p>
+                    <p style="margin-top: 8px;"><strong>Why your action was wrong:</strong> ${getWrongExplanation(userAction)}</p>
+                    <p style="margin-top: 8px; color: #fbbf24;"><strong>EV Loss:</strong> -0.15 BB per hand</p>
+                `;
+            }
+
+            feedbackArea.innerHTML = `
+                <div class="${feedbackClass}">
+                    <div class="feedback-title">${feedbackTitle}</div>
+                    ${feedbackContent}
                 </div>
-                
-                <div style="margin-bottom: 15px;">
-                    <strong>🔥 Plus Gros Mouvements:</strong><br>
-                    ${trending.map(([symbol, data]) => 
-                        `• ${symbol}: <span class="${data.change >= 0 ? 'positive' : 'negative'}">
-                            ${data.change >= 0 ? '+' : ''}${data.change.toFixed(2)}%
-                        </span>`
-                    ).join('<br>')}
+                <button class="btn-primary" style="width: 100%; margin-top: 12px;" onclick="generateNewHand()">➡️ Next Hand</button>
+            `;
+
+            // Mark buttons as correct/incorrect
+            document.querySelectorAll('.action-btn').forEach(btn => {
+                btn.classList.remove('correct', 'incorrect');
+                const btnAction = btn.getAttribute('data-action');
+                if (btnAction === gameState.correctAction) {
+                    btn.classList.add('correct');
+                }
+                if (btnAction === userAction && !isCorrect) {
+                    btn.classList.add('incorrect');
+                }
+            });
+
+            // Update stats
+            updatePostDecisionStats();
+        }
+
+        function getExplanation(action) {
+            const explanations = {
+                'FOLD': 'Your hand is not strong enough for this situation.',
+                'CHECK': 'No aggression to respond to. Pot control with medium strength hands.',
+                'CALL': 'Good equity against the raise. Worth continuing.',
+                'RAISE': 'Strong hand that should build the pot and protect.',
+                'RERAISE': 'Premium hand. Apply pressure on opponents.',
+                'LIMP': 'Medium strength hand in multiway pot. See the flop cheaply.'
+            };
+            return explanations[action] || 'Good decision.';
+        }
+
+        function getWrongExplanation(action) {
+            const explanations = {
+                'FOLD': 'You folded too tight. Your hand has enough strength to continue.',
+                'CHECK': 'Too passive. You should apply pressure with your range strength.',
+                'CALL': 'Too loose. Your hand doesn\'t have sufficient equity here.',
+                'RAISE': 'Too aggressive for your hand strength in this spot.',
+                'RERAISE': 'Way too aggressive. You\'re overrepresenting your hand.',
+                'LIMP': 'Weak passive play. From your position, raise or fold.'
+            };
+            return explanations[action] || 'This wasn\'t the best play.';
+        }
+
+        function updatePostDecisionStats() {
+            const heroEquity = Math.floor(Math.random() * 20) + 45;
+            document.getElementById('equityDisplay').textContent = heroEquity + '%';
+            document.getElementById('potOdds').textContent = '3.5:1';
+            document.getElementById('outsDisplay').textContent = Math.floor(Math.random() * 6) + 6;
+
+            const evCalc = document.getElementById('evCalc');
+            const evValue = (heroEquity / 100 * gameState.pot).toFixed(2);
+            evCalc.innerHTML = `
+                <div class="ev-item">
+                    <strong>Your Hand:</strong><br>${gameState.heroHand}
                 </div>
-                
-                <div style="margin-bottom: 15px;">
-                    <strong>💡 Stratégie Recommandée:</strong><br>
-                    ${bullish.length > bearish.length ? 
-                        '• Profiter du momentum haussier<br>• Prendre des profits sur les gains >10%<br>• Garder 30% en cash pour corrections' :
-                        '• Attendre la stabilisation<br>• Acheter les survendus (-5% ou plus)<br>• Éviter les FOMO sur rebonds'
-                    }
+                <div class="ev-item">
+                    <strong>Equity:</strong><br>${heroEquity}%
                 </div>
-                
-                <div style="padding: 12px; background: #fef3c7; border-radius: 8px;">
-                    <strong>⚠️ Gestion du Risque:</strong><br>
-                    • Stop Loss: -10% max par position<br>
-                    • Take Profit: +15% recommandé<br>
-                    • Position max: 30% du capital<br>
-                    • Toujours calculer les frais eToro
+                <div class="ev-item">
+                    <strong>Pot Size:</strong><br>${gameState.pot.toFixed(1)} BB
+                </div>
+                <div class="ev-item" style="grid-column: 1/-1;">
+                    <strong style="color: #34d399;">Expected Value: +${evValue} BB</strong>
                 </div>
             `;
         }
 
-        // Afficher une alerte
-        function showAlert(type, title, message) {
-            const container = document.getElementById('alertsContainer');
-            const alert = document.createElement('div');
-            alert.className = `alert alert-${type}`;
-            alert.innerHTML = `<strong>${title}:</strong> ${message}`;
-            container.appendChild(alert);
-            setTimeout(() => alert.remove(), 5000);
-        }
-
-        // Fonctions d'action
-        function removePosition(id) {
-            state.positions = state.positions.filter(p => p.id !== id);
-            localStorage.setItem('positions', JSON.stringify(state.positions));
-            updatePositions();
-            analyzeAllPositions();
-        }
-
-        function clearPositions() {
-            if (confirm('Supprimer toutes les positions ?')) {
-                state.positions = [];
-                localStorage.setItem('positions', JSON.stringify(state.positions));
-                updatePositions();
-                analyzeAllPositions();
-            }
-        }
-
-        function analyzePosition() {
-            analyzeAllPositions();
-            showAlert('success', 'Analyse complète', 'Toutes les positions ont été analysées');
-        }
-
-        function executeAction(action, symbol, price) {
-            showAlert('info', `${action} ${symbol}`, `Ordre à exécuter sur eToro @ €${price.toFixed(2)}`);
-        }
-
-        function buyOpportunity(symbol, price, amount) {
-            // Ajouter automatiquement à mes positions
-            const position = {
-                id: Date.now(),
-                symbol,
-                buyPrice: price,
-                quantity: amount / price,
-                investment: amount,
-                timestamp: Date.now()
-            };
+        // ===== UI UPDATES =====
+        function displayRanges() {
+            const heroRangePercent = POSITION_RANGES[gameState.heroPos][gameState.rangeType];
+            const heroRange = generateRange(heroRangePercent);
             
-            state.positions.push(position);
-            localStorage.setItem('positions', JSON.stringify(state.positions));
+            const oppPos = (gameState.heroPos + 1) % 6;
+            const oppRangePercent = POSITION_RANGES[oppPos][gameState.rangeType];
+            const oppRange = generateRange(oppRangePercent);
+
+            document.getElementById('yourRange').innerHTML = heroRange.slice(0, 15).map(hand => `
+                <span class="hand-tag ${getHandCategory(hand)}">${hand}</span>
+            `).join('') + (heroRange.length > 15 ? `<span class="hand-tag" style="opacity:0.5;">+${heroRange.length-15}</span>` : '');
+
+            document.getElementById('oppRange').innerHTML = oppRange.slice(0, 15).map(hand => `
+                <span class="hand-tag ${getHandCategory(hand)}">${hand}</span>
+            `).join('') + (oppRange.length > 15 ? `<span class="hand-tag" style="opacity:0.5;">+${oppRange.length-15}</span>` : '');
+
+            // Update strategy explanation
+            const posName = POSITION_RANGES[gameState.heroPos].pos;
+            document.getElementById('strategyExplanation').innerHTML = `
+                <h4>${posName} Strategy - ${gameState.heroHand}</h4>
+                <ul>
+                    <li>Position: <strong>${posName}</strong> (${(heroRangePercent*100).toFixed(0)}% range)</li>
+                    <li>Hand: <strong>${gameState.heroHand}</strong> - ${getHandCategory(gameState.heroHand).toUpperCase()}</li>
+                    <li>Stack: <strong>${gameState.stackSize}BB</strong></li>
+                    <li>Previous action: ${gameState.actionLog.length > 0 ? gameState.actionLog.join(' → ') : 'No action'}</li>
+                    <li>Correct move: <strong style="color: #34d399;">${gameState.correctAction}</strong> ${gameState.correctSizing}</li>
+                </ul>
+            `;
+
+            // Range analysis
+            const premiumInRange = heroRange.filter(h => PREMIUM_HANDS.includes(h)).length;
+            const strongInRange = heroRange.filter(h => STRONG_HANDS.includes(h)).length;
             
-            showAlert('success', 'Position ajoutée', `${symbol} ajouté au portfolio`);
-            updatePositions();
-            analyzeAllPositions();
+            document.getElementById('rangeAnalysis').innerHTML = `
+                <div>📊 <strong>Range Composition:</strong></div>
+                <div style="margin-top: 6px; margin-left: 15px;">
+                    <div>🔥 Premium (AA-QQ, AK): ${premiumInRange} combos</div>
+                    <div>💪 Strong: ${strongInRange} combos</div>
+                    <div>📈 Total: ${heroRange.length} combos (${(heroRangePercent*100).toFixed(1)}%)</div>
+                </div>
+            `;
         }
 
-        // Initialisation
-        document.addEventListener('DOMContentLoaded', async function() {
-            console.log('CoPilot Trading Pro - Analyse temps réel initialisée');
-            
-            // Démarrer les timers
-            setInterval(updateTimer, 1000);
-            
-            // Premier refresh
-            await fullRefresh();
-            
-            // Refresh automatique
-            setInterval(async () => {
-                const prices = await fetchRealTimePrices();
-                displayLivePrices(prices);
-                
-                // Mise à jour des analyses toutes les 5 secondes
-                if (state.secondsElapsed % 5 === 0) {
-                    analyzeAllPositions();
+        function updateUI() {
+            // Update seat displays
+            gameState.players.forEach((p, i) => {
+                const seatEl = document.getElementById(`seat${i}`);
+                const actionEl = document.getElementById(`action${i}`);
+                const handEl = document.getElementById(`hand${i}`);
+
+                seatEl.classList.remove('hero', 'active-action');
+                if (i === gameState.heroPos) {
+                    seatEl.classList.add('hero');
                 }
-            }, 1000);
-            
-            showAlert('success', 'Système Live', 'Analyse temps réel activée - Mise à jour chaque seconde');
+
+                if (p.action) {
+                    let actionText = p.action;
+                    if (p.amount > 0 && (p.action === 'RAISE' || p.action === 'LIMP')) {
+                        actionText += ` ${p.amount}BB`;
+                    }
+                    actionEl.textContent = actionText;
+                }
+
+                if (i === gameState.heroPos) {
+                    handEl.textContent = gameState.heroHand;
+                } else if (p.hand && p.action && p.action !== 'FOLD') {
+                    handEl.textContent = p.hand;
+                }
+            });
+
+            // Update action history
+            const historyEl = document.getElementById('actionHistory');
+            let historyHTML = '<strong style="color: #60a5fa;">Action History:</strong><br>';
+            if (gameState.actionLog.length === 0) {
+                historyHTML += '<span style="color: #94a3b8; font-size: 10px;">UTG opens first</span>';
+            } else {
+                gameState.actionLog.forEach((log, idx) => {
+                    historyHTML += `<div class="action-item">${idx + 1}. ${log}</div>`;
+                });
+            }
+            historyEl.innerHTML = historyHTML;
+
+            // Update pot
+            document.getElementById('potDisplay').textContent = `Pot: ${gameState.pot.toFixed(1)}BB`;
+
+            // Update phase
+            document.getElementById('phaseIndicator').textContent = gameState.phase.toUpperCase();
+        }
+
+        function changeHeroPos() {
+            generateNewHand();
+        }
+
+        function nextAfterDecision() {
+            generateNewHand();
+        }
+
+        // ===== CHART INITIALIZATION =====
+        let equityChart = null;
+
+        function initEquityChart() {
+            const ctx = document.getElementById('equityChart').getContext('2d');
+            equityChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Your Equity', 'Opponent Equity'],
+                    datasets: [{
+                        data: [52, 48],
+                        backgroundColor: ['#3b82f6', '#ef4444'],
+                        borderColor: ['#60a5fa', '#f87171'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#cbd5e1',
+                                font: { size: 11 },
+                                padding: 15
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ===== INITIALIZATION =====
+        document.addEventListener('DOMContentLoaded', () => {
+            initEquityChart();
+            generateNewHand();
         });
     </script>
 </body>
